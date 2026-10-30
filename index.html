@@ -1020,19 +1020,26 @@
 
         function formatDescription(text) {
             if (!text) return '';
-            // Basic HTML escape
+            
+            // Basic HTML escape (prevent script injection)
             let escaped = text
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;");
 
-            // Convert [Link Text](url) to clickable anchor (supporting complex URLs with query params/ampersands)
-            escaped = escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">$1</a>');
+            // Preserve new lines first
+            escaped = escaped.replace(/\n/g, '<br>');
+
+            // Convert Markdown Links: [Link Text](URL) — handles bold/italics inside and multi-line URLs gracefully
+            escaped = escaped.replace(/\[([^\]]+)\]\(\s*(https?:\/\/[^\s\)]+)\s*\)/g, function(match, textContent, url) {
+                const cleanUrl = url.replace(/<br\s*[\/]?>/gi, '').replace(/&amp;/g, '&');
+                return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${textContent}</a>`;
+            });
 
             // Convert raw URLs to clickable links
-            escaped = escaped.replace(/(https?:\/\/[^\s<]+)/g, function(url) {
+            escaped = escaped.replace(/(https?:\/\/[^\s<"]+)/g, function(url) {
                 if (url.includes('href=')) return url;
-                const cleanUrl = url.replace(/&quot;|["']/g, '');
+                const cleanUrl = url.replace(/&quot;|["']/g, '').replace(/&amp;/g, '&');
                 return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${cleanUrl}</a>`;
             });
 
@@ -1046,9 +1053,6 @@
 
             // Underline: <u>text</u>
             escaped = escaped.replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>');
-
-            // Preserve new lines when Enter is pressed
-            escaped = escaped.replace(/\n/g, '<br>');
 
             return escaped;
         }
