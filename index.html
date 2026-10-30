@@ -454,21 +454,21 @@
 
     <script>
         // --- SUPABASE CONFIGURATION ---
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // Replace with your Supabase URL[cite: 7]
-        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your Supabase Anon Key[cite: 7]
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // Replace with your Supabase URL
+        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your Supabase Anon Key
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let currentDate = new Date(2026, 9, 1); // October 2026 default[cite: 7]
-        let currentFilter = 'all';[cite: 7]
-        let activeEventId = null;[cite: 7]
-        let events = [];[cite: 7]
+        let currentDate = new Date(2026, 9, 1); // October 2026 default
+        let currentFilter = 'all';
+        let activeEventId = null;
+        let events = [];
 
-        const categoryColors = {[cite: 7]
-            truckfest: '#1CC8FA',[cite: 7]
-            convoy: '#3498DB',[cite: 7]
-            charity: '#E74C3C',[cite: 7]
-            utl_own: '#9B59B6',[cite: 7]
-            custom_vtc: '#F1C40F'[cite: 7]
+        const categoryColors = {
+            truckfest: '#1CC8FA',
+            convoy: '#3498DB',
+            charity: '#E74C3C',
+            utl_own: '#9B59B6',
+            custom_vtc: '#F1C40F'
         };
 
         const STAFF_PASSCODE = 'UTLEvents2026';
@@ -505,14 +505,14 @@
             alert('🔒 Logged out of staff panel.');
         }
 
-        // Fetch live events from Supabase for all visitors[cite: 7]
+        // Fetch live events from Supabase for all visitors
         async function fetchEvents() {
             const { data, error } = await supabase
                 .from('utl_events')
                 .select('*')
-                .order('event_date', { ascending: true });[cite: 7]
+                .order('event_date', { ascending: true });
 
-            if (!error && data) {[cite: 7]
+            if (!error && data) {
                 events = data.map(e => ({
                     id: e.id,
                     title: e.title,
@@ -525,47 +525,47 @@
                     userRsvp: null
                 }));
             }
-            renderCalendar();[cite: 7]
+            renderCalendar();
         }
 
-        function renderCalendar() {[cite: 7]
-            const year = currentDate.getFullYear();[cite: 7]
-            const month = currentDate.getMonth();[cite: 7]
-            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];[cite: 7]
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             
-            document.getElementById('current-month-label').innerText = `${monthNames[month]} ${year}`;[cite: 7]
-            const grid = document.getElementById('calendar-days-grid');[cite: 7]
-            grid.innerHTML = '';[cite: 7]
+            document.getElementById('current-month-label').innerText = `${monthNames[month]} ${year}`;
+            const grid = document.getElementById('calendar-days-grid');
+            grid.innerHTML = '';
 
-            const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;[cite: 7]
-            const totalDays = new Date(year, month + 1, 0).getDate();[cite: 7]
+            const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
+            const totalDays = new Date(year, month + 1, 0).getDate();
 
-            for (let i = 0; i < firstDayIndex; i++) {[cite: 7]
-                const cell = document.createElement('div');[cite: 7]
-                cell.className = 'calendar-cell other-month';[cite: 7]
-                grid.appendChild(cell);[cite: 7]
+            for (let i = 0; i < firstDayIndex; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell other-month';
+                grid.appendChild(cell);
             }
 
-            for (let day = 1; day <= totalDays; day++) {[cite: 7]
-                const cell = document.createElement('div');[cite: 7]
-                cell.className = 'calendar-cell';[cite: 7]
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;[cite: 7]
+            for (let day = 1; day <= totalDays; day++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell';
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 
-                cell.innerHTML = `<span class="cell-number">${day}</span>`;[cite: 7]
+                cell.innerHTML = `<span class="cell-number">${day}</span>`;
 
-                const dayEvents = events.filter(e => e.date.startsWith(dateStr) && (currentFilter === 'all' || e.type === currentFilter));[cite: 7]
+                const dayEvents = events.filter(e => e.date.startsWith(dateStr) && (currentFilter === 'all' || e.type === currentFilter));
                 
-                dayEvents.forEach(evt => {[cite: 7]
-                    const chip = document.createElement('div');[cite: 7]
-                    chip.className = 'event-chip';[cite: 7]
-                    chip.style.backgroundColor = categoryColors[evt.type] || '#1CC8FA';[cite: 7]
-                    chip.style.color = '#0f0a1e';[cite: 7]
-                    chip.innerText = evt.title;[cite: 7]
-                    chip.onclick = () => openEventModal(evt.id);[cite: 7]
-                    cell.appendChild(chip);[cite: 7]
+                dayEvents.forEach(evt => {
+                    const chip = document.createElement('div');
+                    chip.className = 'event-chip';
+                    chip.style.backgroundColor = categoryColors[evt.type] || '#1CC8FA';
+                    chip.style.color = '#0f0a1e';
+                    chip.innerText = evt.title;
+                    chip.onclick = () => openEventModal(evt.id);
+                    cell.appendChild(chip);
                 });
 
-                grid.appendChild(cell);[cite: 7]
+                grid.appendChild(cell);
             }
         }
 
@@ -594,44 +594,44 @@
             document.getElementById(modalId).classList.remove('active');
         }
 
-        // Save newly created events straight to Supabase[cite: 7]
-        async function handleEventSubmit(e) {[cite: 7]
-            e.preventDefault();[cite: 7]
-            const fileInput = document.getElementById('evt-img-file').files[0];[cite: 7]
-            let imageUrl = document.getElementById('evt-img-url').value.trim();[cite: 7]
+        // Save newly created events straight to Supabase
+        async function handleEventSubmit(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('evt-img-file').files[0];
+            let imageUrl = document.getElementById('evt-img-url').value.trim();
 
-            if (fileInput) {[cite: 7]
-                imageUrl = await new Promise((resolve) => {[cite: 7]
-                    const reader = new FileReader();[cite: 7]
-                    reader.onload = (evt) => resolve(evt.target.result);[cite: 7]
-                    reader.readAsDataURL(fileInput);[cite: 7]
+            if (fileInput) {
+                imageUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (evt) => resolve(evt.target.result);
+                    reader.readAsDataURL(fileInput);
                 });
             }
 
-            const title = document.getElementById('evt-title').value;[cite: 7]
-            const type = document.getElementById('evt-type').value;[cite: 7]
-            const date = document.getElementById('evt-date').value;[cite: 7]
-            const server = document.getElementById('evt-server').value;[cite: 7]
-            const route = document.getElementById('evt-route').value;[cite: 7]
+            const title = document.getElementById('evt-title').value;
+            const type = document.getElementById('evt-type').value;
+            const date = document.getElementById('evt-date').value;
+            const server = document.getElementById('evt-server').value;
+            const route = document.getElementById('evt-route').value;
 
-            const { error } = await supabase[cite: 7]
-                .from('utl_events')[cite: 7]
-                .insert({[cite: 7]
-                    title: title,[cite: 7]
-                    event_type: type,[cite: 7]
-                    event_date: date,[cite: 7]
-                    server: server,[cite: 7]
-                    route: route,[cite: 7]
+            const { error } = await supabase
+                .from('utl_events')
+                .insert({
+                    title: title,
+                    event_type: type,
+                    event_date: date,
+                    server: server,
+                    route: route,
                     route_image: imageUrl,
                     rsvps: { attending: 0, unsure: 0, declined: 0 }
                 });
 
-            if (!error) {[cite: 7]
-                closeModal('management-modal');[cite: 7]
-                document.getElementById('event-form').reset();[cite: 7]
-                fetchEvents(); // Refresh live view[cite: 7]
+            if (!error) {
+                closeModal('management-modal');
+                document.getElementById('event-form').reset();
+                fetchEvents(); // Refresh live view
             } else {
-                alert('Failed to save event: ' + error.message);[cite: 7]
+                alert('Failed to save event: ' + error.message);
             }
         }
 
@@ -708,8 +708,8 @@
         }
 
         // Initial load
-        checkStaffSession();[cite: 7]
-        fetchEvents();[cite: 7]
+        checkStaffSession();
+        fetchEvents();
     </script>
 </body>
 </html>
