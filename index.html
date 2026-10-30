@@ -667,7 +667,6 @@
 
                 document.getElementById('discord-btn-text').innerText = userName;
 
-                // Check staff authorization directly via Supabase (bypasses BisectHosting SSL/mixed-content block)
                 if (dbClient) {
                     const { data: staffData, error: staffError } = await dbClient
                         .from('authorized_staff')
@@ -1027,12 +1026,14 @@
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;");
 
-            // 1. Process Markdown links: [Link Text](URL) or **[Link Text](URL)**
+            // 1. Process Markdown links seamlessly (supports [Link](url) and **[Link](url)**)
             escaped = escaped.replace(/(\*\*)?\[([^\]]+)\]\s*\(\s*([\s\S]*?)\s*\)(\*\*|[^\w]|$)/g, function(match, boldStart, textContent, url, boldEnd) {
                 const cleanUrl = url.replace(/<br\s*[\/]?>/gi, '').replace(/\s+/g, '').replace(/&amp;/g, '&');
-                const isBold = boldStart || (boldEnd && boldEnd.includes('**'));
-                const display = isBold ? `<strong>${textContent}</strong>` : textContent;
-                return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${display}</a>` + (boldEnd && !boldEnd.includes('**') ? boldEnd : '');
+                let innerText = textContent.replace(/\*\*(.*?)\*\*/g, '$1').replace(/__(.*?)__/g, '$1');
+                const isBold = boldStart || (boldEnd && boldEnd.includes('**')) || textContent.includes('**');
+                const display = isBold ? `<strong>${innerText}</strong>` : textContent;
+
+                return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${display}</a>`;
             });
 
             // 2. Convert raw standalone URLs to clickable links
@@ -1042,7 +1043,7 @@
                 return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${cleanUrl}</a>`;
             });
 
-            // 3. Bold: **text** or __text__
+            // 3. Standalone Bold: **text** or __text__
             escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             escaped = escaped.replace(/__(.*?)__/g, '<strong>$1</strong>');
 
