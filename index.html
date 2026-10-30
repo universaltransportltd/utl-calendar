@@ -456,9 +456,9 @@
         const SUPABASE_URL = 'https://jmfxrkmvriefrulivley.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptZnhya212cmllZnJ1bGl2bGV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjM1OTgzMywiZXhwIjoyMTAxOTM1ODMzfQ.T2bn16_KraZtIM86ByJDRiVALoLpwN3yZGe7lBifLc4'; 
         
-        let supabase = null;
+        let dbClient = null;
         try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         } catch (e) {
             console.error('Supabase initialization error:', e);
         }
@@ -480,15 +480,25 @@
 
         function checkStaffSession() {
             if (localStorage.getItem('utl_staff_unlocked') === 'true') {
-                document.getElementById('staff-login-btn').style.display = 'none';
-                document.getElementById('management-btn').style.display = 'inline-block';
-                document.getElementById('staff-logout-btn').style.display = 'inline-block';
-                document.getElementById('staff-delete-container').style.display = 'block';
+                const loginBtn = document.getElementById('staff-login-btn');
+                const mgmtBtn = document.getElementById('management-btn');
+                const logoutBtn = document.getElementById('staff-logout-btn');
+                const deleteContainer = document.getElementById('staff-delete-container');
+
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (mgmtBtn) mgmtBtn.style.display = 'inline-block';
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                if (deleteContainer) deleteContainer.style.display = 'block';
             } else {
-                document.getElementById('staff-login-btn').style.display = 'inline-block';
-                document.getElementById('management-btn').style.display = 'none';
-                document.getElementById('staff-logout-btn').style.display = 'none';
-                document.getElementById('staff-delete-container').style.display = 'none';
+                const loginBtn = document.getElementById('staff-login-btn');
+                const mgmtBtn = document.getElementById('management-btn');
+                const logoutBtn = document.getElementById('staff-logout-btn');
+                const deleteContainer = document.getElementById('staff-delete-container');
+
+                if (loginBtn) loginBtn.style.display = 'inline-block';
+                if (mgmtBtn) mgmtBtn.style.display = 'none';
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                if (deleteContainer) deleteContainer.style.display = 'none';
             }
         }
 
@@ -512,13 +522,13 @@
 
         // Fetch live events from Supabase safely
         async function fetchEvents() {
-            if (!supabase) {
+            if (!dbClient) {
                 renderCalendar();
                 return;
             }
 
             try {
-                const { data, error } = await supabase
+                const { data, error } = await dbClient
                     .from('utl_events')
                     .select('*')
                     .order('event_date', { ascending: true });
@@ -606,17 +616,19 @@
         }
 
         function openManagementModal() {
-            document.getElementById('management-modal').classList.add('active');
+            const modal = document.getElementById('management-modal');
+            if (modal) modal.classList.add('active');
         }
 
         function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.remove('active');
         }
 
         // Save newly created events straight to Supabase
         async function handleEventSubmit(e) {
             e.preventDefault();
-            if (!supabase) {
+            if (!dbClient) {
                 alert('Supabase is not configured.');
                 return;
             }
@@ -638,7 +650,7 @@
             const server = document.getElementById('evt-server').value;
             const route = document.getElementById('evt-route').value;
 
-            const { error } = await supabase
+            const { error } = await dbClient
                 .from('utl_events')
                 .insert({
                     title: title,
@@ -660,10 +672,10 @@
         }
 
         async function deleteCurrentEvent() {
-            if (!activeEventId || !supabase) return;
+            if (!activeEventId || !dbClient) return;
             if (!confirm('Are you sure you want to delete this event?')) return;
 
-            const { error } = await supabase
+            const { error } = await dbClient
                 .from('utl_events')
                 .delete()
                 .eq('id', activeEventId);
@@ -704,12 +716,13 @@
                 if (evt.userRsvp === 'declined') document.getElementById('rsvp-no').classList.add('active');
             }
 
-            document.getElementById('event-modal').classList.add('active');
+            const modal = document.getElementById('event-modal');
+            if (modal) modal.classList.add('active');
         }
 
         async function setRSVP(status) {
             const evt = events.find(e => e.id === activeEventId);
-            if (!evt || !supabase) return;
+            if (!evt || !dbClient) return;
 
             if (evt.userRsvp) {
                 evt.rsvps[evt.userRsvp]--;
@@ -722,7 +735,7 @@
                 evt.rsvps[status]++;
             }
 
-            await supabase
+            await dbClient
                 .from('utl_events')
                 .update({ rsvps: evt.rsvps })
                 .eq('id', evt.id);
