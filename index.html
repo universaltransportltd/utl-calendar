@@ -1027,18 +1027,12 @@
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;");
 
-            // 1. Process Markdown links: [Link Text](URL) - Handles multi-line URLs and nested bold/italics correctly
-            escaped = escaped.replace(/\[([^\]]+)\]\s*\(\s*([\s\S]*?)\s*\)/g, function(match, textContent, url) {
+            // 1. Process Markdown links: [Link Text](URL) or **[Link Text](URL)**
+            escaped = escaped.replace(/(\*\*)?\[([^\]]+)\]\s*\(\s*([\s\S]*?)\s*\)(\*\*|[^\w]|$)/g, function(match, boldStart, textContent, url, boldEnd) {
                 const cleanUrl = url.replace(/<br\s*[\/]?>/gi, '').replace(/\s+/g, '').replace(/&amp;/g, '&');
-                
-                // Parse bold/italics inside the display text if any
-                let formattedText = textContent
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/__(.*?)__/g, '<strong>$1</strong>')
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                    .replace(/_(.*?)_/g, '<em>$1</em>');
-
-                return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${formattedText}</a>`;
+                const isBold = boldStart || (boldEnd && boldEnd.includes('**'));
+                const display = isBold ? `<strong>${textContent}</strong>` : textContent;
+                return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${display}</a>` + (boldEnd && !boldEnd.includes('**') ? boldEnd : '');
             });
 
             // 2. Convert raw standalone URLs to clickable links
