@@ -125,7 +125,7 @@
             margin: 0 auto;
             padding: 30px 20px;
             display: grid;
-            grid-template-columns: 300px 1fr;
+            grid-template-columns: 320px 1fr;
             gap: 25px;
         }
 
@@ -153,13 +153,16 @@
             color: var(--primary-blue);
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .overview-event-item {
             background-color: var(--bg-dark);
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            padding: 10px;
+            padding: 12px;
             cursor: pointer;
             transition: border-color 0.2s, transform 0.1s;
         }
@@ -173,12 +176,15 @@
             font-size: 13px;
             font-weight: 600;
             color: var(--text-light);
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
 
         .overview-meta {
             font-size: 11px;
             color: var(--text-dim);
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
         }
 
         .calendar-section {
@@ -292,7 +298,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(15, 10, 30, 0.8);
+            background: rgba(15, 10, 30, 0.85);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -365,10 +371,22 @@
             outline: none;
         }
 
+        .file-input-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            background: transparent;
+            border: none;
+            padding: 4px 0;
+        }
+
         .rsvp-container {
             display: flex;
             gap: 10px;
-            margin-top: 20px;
+            margin-top: 15px;
             justify-content: center;
         }
 
@@ -387,6 +405,24 @@
         .rsvp-btn.attending.active { background: var(--success); border-color: var(--success); color: #fff; }
         .rsvp-btn.unsure.active { background: var(--warning); border-color: var(--warning); color: #000; }
         .rsvp-btn.declined.active { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+        /* Lightbox Preview */
+        .lightbox-card {
+            max-width: 90vw;
+            max-height: 90vh;
+            background: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lightbox-card img {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 8px;
+            border: 2px solid var(--primary-blue);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
     </style>
 </head>
 <body>
@@ -399,7 +435,7 @@
         </div>
         <div class="header-actions">
             <!-- Driver Identity Badge / Login Button -->
-            <button class="btn btn-secondary" id="driver-login-btn" onclick="promptDriverLogin()">👤 Driver: Guest</button>
+            <button class="btn btn-secondary" id="driver-login-btn" onclick="promptDriverLogin()">👤 Driver Login</button>
 
             <button class="btn btn-secondary" onclick="prevMonth()">◀ Prev</button>
             <span id="current-month-label" class="month-display" style="font-size: 16px;">October 2026</span>
@@ -413,9 +449,9 @@
     </header>
 
     <main>
-        <!-- Left Sidebar: Monthly Events Overview -->
+        <!-- Left Sidebar: All Events Overview -->
         <aside class="sidebar-overview">
-            <h3>📋 Month Overview</h3>
+            <h3>📋 All Scheduled Events <span id="event-count-badge" style="font-size: 12px; color: var(--primary-blue);">(0)</span></h3>
             <div id="sidebar-events-list" style="display: flex; flex-direction: column; gap: 10px;">
                 <!-- Populated dynamically -->
             </div>
@@ -463,11 +499,24 @@
                     <button class="rsvp-btn unsure" id="rsvp-maybe" onclick="setRSVP('unsure')">❓ Unsure</button>
                     <button class="rsvp-btn declined" id="rsvp-no" onclick="setRSVP('declined')">❌ Unable</button>
                 </div>
+
+                <!-- Custom Discord Reminder Button -->
+                <div style="margin-top: 15px;">
+                    <button class="btn btn-secondary" style="width: 100%; border-color: var(--primary-blue);" onclick="triggerDiscordReminder()">🔔 Set Discord Event Reminder</button>
+                </div>
+
                 <!-- Delete button (Only visible to unlocked staff) -->
                 <div id="staff-delete-container" style="margin-top: 15px; display: none;">
                     <button class="btn btn-danger" style="width: 100%;" onclick="deleteCurrentEvent()">🗑️ Delete This Event</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Lightbox Modal for Full Map Enlargement -->
+    <div class="modal-overlay" id="lightbox-modal" onclick="closeModal('lightbox-modal')">
+        <div class="lightbox-card">
+            <img id="lightbox-img" src="" alt="Enlarged Route Map">
         </div>
     </div>
 
@@ -507,9 +556,9 @@
                 </div>
                 <div class="form-group">
                     <label>Route Map Image (URL or Local Upload)</label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="url" id="evt-img-url" placeholder="https://i.imgur.com/..." style="flex: 1;">
-                        <input type="file" id="evt-img-file" accept="image/*" style="font-size: 12px; color: var(--text-dim);">
+                    <div class="file-input-wrapper">
+                        <input type="url" id="evt-img-url" placeholder="https://i.imgur.com/...">
+                        <input type="file" id="evt-img-file" accept="image/*">
                     </div>
                 </div>
                 <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">Publish Event</button>
@@ -544,7 +593,6 @@
 
         const STAFF_PASSCODE = 'UTLEvents2026';
 
-        // --- DRIVER IDENTITY MANAGEMENT ---
         function checkDriverSession() {
             const driverName = localStorage.getItem('utl_driver_name');
             const btn = document.getElementById('driver-login-btn');
@@ -574,13 +622,17 @@
 
         window.checkStaffSession = function() {
             if (localStorage.getItem('utl_staff_unlocked') === 'true') {
+                const staffName = localStorage.getItem('utl_staff_name') || 'Staff';
                 const loginBtn = document.getElementById('staff-login-btn');
                 const mgmtBtn = document.getElementById('management-btn');
                 const logoutBtn = document.getElementById('staff-logout-btn');
                 const deleteContainer = document.getElementById('staff-delete-container');
 
                 if (loginBtn) loginBtn.style.display = 'none';
-                if (mgmtBtn) mgmtBtn.style.display = 'inline-block';
+                if (mgmtBtn) {
+                    mgmtBtn.innerText = `⚙️ Mgmt Panel (${staffName})`;
+                    mgmtBtn.style.display = 'inline-block';
+                }
                 if (logoutBtn) logoutBtn.style.display = 'inline-block';
                 if (deleteContainer) deleteContainer.style.display = 'block';
             } else {
@@ -597,24 +649,30 @@
         };
 
         window.promptStaffPasscode = function() {
-            const entered = prompt('Enter Events Team / Management Passcode:');
-            if (entered === STAFF_PASSCODE) {
+            const nameEntered = prompt('Enter your Staff Name / Callsign:');
+            if (!nameEntered || !nameEntered.trim()) return;
+
+            const passcodeEntered = prompt(`Hello ${nameEntered.trim()}! Enter Events Team Passcode:`);
+            if (passcodeEntered === STAFF_PASSCODE) {
                 localStorage.setItem('utl_staff_unlocked', 'true');
+                localStorage.setItem('utl_staff_name', nameEntered.trim());
+                localStorage.setItem('utl_driver_name', nameEntered.trim());
                 checkStaffSession();
-                alert('✅ Staff panel unlocked successfully!');
+                checkDriverSession();
+                alert(`✅ Staff panel unlocked for ${nameEntered.trim()}! You can now also submit RSVPs.`);
                 openManagementModal();
-            } else if (entered !== null) {
+            } else if (passcodeEntered !== null) {
                 alert('❌ Incorrect passcode.');
             }
         };
 
         window.logoutStaff = function() {
             localStorage.removeItem('utl_staff_unlocked');
+            localStorage.removeItem('utl_staff_name');
             checkStaffSession();
             alert('🔒 Logged out of staff panel.');
         };
 
-        // Fetch live events from Supabase safely
         async function fetchEvents() {
             if (!dbClient) {
                 renderCalendar();
@@ -637,7 +695,7 @@
                         route: e.route,
                         routeImage: e.route_image || '',
                         rsvps: e.rsvps || { attending: 0, unsure: 0, declined: 0 },
-                        driverRsvps: e.driver_rsvps || {} // Store individual driver rsvps {driverName: status}
+                        driverRsvps: e.driver_rsvps || {}
                     }));
                 }
             } catch (err) {
@@ -690,27 +748,44 @@
                 }
             }
 
-            // 2. Render Left Sidebar Month Overview List
+            // 2. Render Left Sidebar ALL Events List (Not limited to month)
             const sidebarList = document.getElementById('sidebar-events-list');
+            const countBadge = document.getElementById('event-count-badge');
+            
             if (sidebarList) {
                 sidebarList.innerHTML = '';
-                const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
-                const monthEvents = events.filter(e => e.date && e.date.startsWith(monthPrefix));
+                
+                // Filter all events by category filter if selected
+                const filteredAllEvents = events.filter(e => currentFilter === 'all' || e.type === currentFilter);
+                if (countBadge) countBadge.innerText = `(${filteredAllEvents.length})`;
 
-                if (monthEvents.length === 0) {
-                    sidebarList.innerHTML = `<p style="font-size:12px; color:var(--text-dim); text-align:center; padding: 10px;">No events scheduled for ${monthNames[month]}.</p>`;
+                if (filteredAllEvents.length === 0) {
+                    sidebarList.innerHTML = `<p style="font-size:12px; color:var(--text-dim); text-align:center; padding: 10px;">No events found on the calendar.</p>`;
                 } else {
-                    monthEvents.forEach(evt => {
+                    filteredAllEvents.forEach(evt => {
                         const item = document.createElement('div');
                         item.className = 'overview-event-item';
-                        item.onclick = () => openEventModal(evt.id);
+                        item.onclick = () => {
+                            // If event is in another month, adjust calendar date view to match it
+                            if (evt.date) {
+                                const evtDate = new Date(evt.date);
+                                if (evtDate.getFullYear() !== currentDate.getFullYear() || evtDate.getMonth() !== currentDate.getMonth()) {
+                                    currentDate = new Date(evtDate.getFullYear(), evtDate.getMonth(), 1);
+                                    renderCalendar();
+                                }
+                            }
+                            openEventModal(evt.id);
+                        };
                         
                         const dateObj = new Date(evt.date);
-                        const formattedDate = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                        const formattedDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
                         item.innerHTML = `
                             <div class="overview-title">${evt.title}</div>
-                            <div class="overview-meta">📅 ${formattedDate} • ${evt.server}</div>
+                            <div class="overview-meta">
+                                <span>📅 ${formattedDate}</span>
+                                <span>🖥️ ${evt.server}</span>
+                            </div>
                         `;
                         sidebarList.appendChild(item);
                     });
@@ -747,7 +822,25 @@
             if (modal) modal.classList.remove('active');
         };
 
-        // Save newly created events straight to Supabase
+        window.openLightbox = function(imgSrc) {
+            const lightbox = document.getElementById('lightbox-modal');
+            const lightboxImg = document.getElementById('lightbox-img');
+            if (lightbox && lightboxImg) {
+                lightboxImg.src = imgSrc;
+                lightbox.classList.add('active');
+            }
+        };
+
+        window.triggerDiscordReminder = function() {
+            const evt = events.find(e => e.id === activeEventId);
+            if (!evt) return;
+
+            const dateObj = new Date(evt.date);
+            const formattedTime = dateObj.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            alert(`🔔 Discord Reminder Instructions:\n\nTo get a live DM reminder from Universal Bot for "${evt.title}", go to Discord and use:\n\n/reminder set event:${evt.title} time:${formattedTime}`);
+        };
+
         window.handleEventSubmit = async function(e) {
             e.preventDefault();
             if (!dbClient) {
@@ -816,17 +909,22 @@
             const evt = events.find(e => e.id === eventId);
             if (!evt) return;
 
-            const driverName = localStorage.getItem('utl_driver_name');
+            const activeName = localStorage.getItem('utl_driver_name') || localStorage.getItem('utl_staff_name');
             const statusLabel = document.getElementById('rsvp-status-label');
-            if (driverName) {
-                statusLabel.innerHTML = `Your RSVP Status (<span style="color:var(--primary-blue);">${driverName}</span>)`;
+            if (activeName) {
+                statusLabel.innerHTML = `Your RSVP Status (<span style="color:var(--primary-blue);">${activeName}</span>)`;
             } else {
-                statusLabel.innerHTML = `Your RSVP Status <span style="color:var(--warning); font-size:11px;">(⚠️ Not logged in as Driver)</span>`;
+                statusLabel.innerHTML = `Your RSVP Status <span style="color:var(--warning); font-size:11px;">(⚠️ Click "👤 Driver Login" to RSVP)</span>`;
             }
 
             document.getElementById('modal-title').innerText = evt.title;
             
-            let imgHTML = evt.routeImage ? `<div style="margin-bottom:15px; text-align:center;"><img src="${evt.routeImage}" style="max-width:100%; max-height:200px; border-radius:8px;"></div>` : '';
+            let imgHTML = evt.routeImage 
+                ? `<div style="margin-bottom:15px; text-align:center;">
+                     <img src="${evt.routeImage}" style="max-width:100%; max-height:220px; border-radius:8px; cursor:pointer;" onclick="openLightbox('${evt.routeImage}')" title="Click to enlarge route map">
+                     <p style="font-size:11px; color:var(--text-dim); margin-top:4px;">🔍 Click image to enlarge</p>
+                   </div>` 
+                : '';
 
             document.getElementById('modal-body').innerHTML = `
                 ${imgHTML}
@@ -842,7 +940,7 @@
 
             document.querySelectorAll('.rsvp-btn').forEach(b => b.classList.remove('active'));
             
-            const userRsvp = driverName && evt.driverRsvps ? evt.driverRsvps[driverName] : null;
+            const userRsvp = activeName && evt.driverRsvps ? evt.driverRsvps[activeName] : null;
             if (userRsvp) {
                 if (userRsvp === 'attending') document.getElementById('rsvp-yes').classList.add('active');
                 if (userRsvp === 'unsure') document.getElementById('rsvp-maybe').classList.add('active');
@@ -854,8 +952,8 @@
         }
 
         window.setRSVP = async function(status) {
-            const driverName = localStorage.getItem('utl_driver_name');
-            if (!driverName) {
+            const activeName = localStorage.getItem('utl_driver_name') || localStorage.getItem('utl_staff_name');
+            if (!activeName) {
                 alert('⚠️ Please click "👤 Driver Login" in the top header first and enter your name before submitting an RSVP!');
                 promptDriverLogin();
                 return;
@@ -865,16 +963,16 @@
             if (!evt || !dbClient) return;
 
             if (!evt.driverRsvps) evt.driverRsvps = {};
-            const previousStatus = evt.driverRsvps[driverName];
+            const previousStatus = evt.driverRsvps[activeName];
 
             if (previousStatus) {
                 evt.rsvps[previousStatus] = Math.max(0, evt.rsvps[previousStatus] - 1);
             }
 
             if (previousStatus === status) {
-                delete evt.driverRsvps[driverName];
+                delete evt.driverRsvps[activeName];
             } else {
-                evt.driverRsvps[driverName] = status;
+                evt.driverRsvps[activeName] = status;
                 evt.rsvps[status] = (evt.rsvps[status] || 0) + 1;
             }
 
@@ -887,7 +985,6 @@
             renderCalendar();
         };
 
-        // Initialize session, render calendar immediately, then load database events
         checkDriverSession();
         checkStaffSession();
         renderCalendar(); 
