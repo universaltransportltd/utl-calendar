@@ -1,129 +1,715 @@
-<!-- Add Supabase JS Library in the <head> of index.html -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTL — Universal Transport Ltd Event Calendar</title>
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-dark: #0f0a1e;
+            --bg-card: #1c1333;
+            --bg-hover: #261a45;
+            --primary-blue: #1CC8FA;
+            --deep-purple: #3F186F;
+            --accent-purple: #2D1048;
+            --text-light: #ffffff;
+            --text-dim: #b8b2d1;
+            --border-color: #382563;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f1c40f;
+        }
 
-<script>
-    // Initialize Supabase Client
-    const SUPABASE_URL = 'https://jmfxrkmvriefrulivley.supabase.coL'; // Replace with your SUPABASE_URL
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptZnhya212cmllZnJ1bGl2bGV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjM1OTgzMywiZXhwIjoyMTAxOTM1ODMzfQ.T2bn16_KraZtIM86ByJDRiVALoLpwN3yZGe7lBifLc4'; // Replace with your SUPABASE_ANON_KEY (use public anon key)
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-    let currentDate = new Date(2026, 9, 1);
-    let currentFilter = 'all';
-    let activeEventId = null;
-    let events = [];
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-    const categoryColors = {
-        truckfest: '#1CC8FA',
-        convoy: '#3498DB',
-        charity: '#E74C3C',
-        utl_own: '#9B59B6',
-        custom_vtc: '#F1C40F'
-    };
+        header {
+            background: linear-gradient(135deg, var(--accent-purple), var(--bg-card));
+            padding: 15px 40px;
+            border-bottom: 2px solid var(--primary-blue);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
 
-    // Fetch live events from Supabase for all drivers
-    async function fetchEvents() {
-        const { data, error } = await supabase
-            .from('utl_events')
-            .select('*')
-            .order('event_date', { ascending: true });
+        .header-logo {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
 
-        if (!error && data) {
-            events = data.map(e => ({
-                id: e.id,
-                title: e.title,
-                type: e.event_type,
-                date: e.event_date,
-                server: e.server,
-                route: e.route,
-                routeImage: e.route_image || '',
-                rsvps: { attending: 0, unsure: 0, declined: 0 },
-                userRsvp: null
-            }));
+        .header-logo img {
+            height: 42px;
+            object-fit: contain;
+        }
+
+        .header-logo span {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-blue);
+            letter-spacing: 0.5px;
+        }
+
+        .header-logo p {
+            font-size: 12px;
+            color: var(--text-dim);
+            padding-left: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            background-color: var(--primary-blue);
+            color: var(--bg-dark);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            font-size: 13px;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--deep-purple);
+            color: var(--text-light);
+            border: 1px solid var(--primary-blue);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: #ffffff;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--text-dim);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        main {
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .calendar-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .month-display {
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--text-light);
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-dim);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-tab.active, .filter-tab:hover {
+            background-color: var(--deep-purple);
+            color: var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+        }
+
+        .day-header {
+            text-align: center;
+            font-weight: bold;
+            color: var(--text-dim);
+            padding: 10px 0;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .calendar-cell {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            min-height: 120px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: border-color 0.2s;
+        }
+
+        .calendar-cell:hover {
+            border-color: var(--primary-blue);
+        }
+
+        .calendar-cell.other-month {
+            opacity: 0.4;
+        }
+
+        .cell-number {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dim);
+            align-self: flex-end;
+        }
+
+        .event-chip {
+            font-size: 11px;
+            padding: 5px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: transform 0.1s;
+        }
+
+        .event-chip:hover {
+            transform: scale(1.02);
+        }
+
+        /* Modal Overlays */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 10, 30, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--primary-blue);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: var(--primary-blue);
+            font-size: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-bottom: 5px;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+        }
+
+        .rsvp-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .rsvp-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-dark);
+            color: var(--text-light);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .rsvp-btn.attending.active { background: var(--success); border-color: var(--success); color: #fff; }
+        .rsvp-btn.unsure.active { background: var(--warning); border-color: var(--warning); color: #000; }
+        .rsvp-btn.declined.active { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+        @media (max-width: 900px) {
+            .calendar-grid {
+                grid-template-columns: repeat(1, 1fr);
+            }
+            .calendar-cell {
+                min-height: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-logo">
+            <!-- Logo with fallback text if image fails to load -->
+            <img src="UTL3DLong.jpg" alt="Universal Transport Ltd Logo" onerror="this.style.display='none'; document.getElementById('fallback-title').style.display='block';">
+            <span id="fallback-title" style="display:none;">UNIVERSAL TRANSPORT LTD</span>
+            <p>Interactive VTC Event & Convoy Calendar</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="prevMonth()">◀ Prev</button>
+            <span id="current-month-label" class="month-display" style="font-size: 16px;">October 2026</span>
+            <button class="btn btn-secondary" onclick="nextMonth()">Next ▶</button>
+
+            <!-- Staff Control Header Actions -->
+            <button class="btn btn-secondary" id="staff-login-btn" onclick="promptStaffPasscode()">🔐 Staff Login</button>
+            <button class="btn" id="management-btn" style="display: none;" onclick="openManagementModal()">⚙️ Management Panel</button>
+            <button class="btn btn-outline" id="staff-logout-btn" style="display: none;" onclick="logoutStaff()">Log Out</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="calendar-controls">
+            <div class="filter-tabs">
+                <button class="filter-tab active" onclick="filterEvents('all')">All Events</button>
+                <button class="filter-tab" onclick="filterEvents('truckfest')">🎪 Truckfest</button>
+                <button class="filter-tab" onclick="filterEvents('convoy')">🚛 Convoys</button>
+                <button class="filter-tab" onclick="filterEvents('charity')">❤️ Charity</button>
+                <button class="filter-tab" onclick="filterEvents('utl_own')">🌟 UTL Exclusive</button>
+            </div>
+        </div>
+
+        <div class="calendar-grid" id="calendar-header-grid">
+            <div class="day-header">Mon</div>
+            <div class="day-header">Tue</div>
+            <div class="day-header">Wed</div>
+            <div class="day-header">Thu</div>
+            <div class="day-header">Fri</div>
+            <div class="day-header">Sat</div>
+            <div class="day-header">Sun</div>
+        </div>
+        <div class="calendar-grid" id="calendar-days-grid" style="margin-top: 10px;"></div>
+    </main>
+
+    <!-- Event Details & RSVP Modal -->
+    <div class="modal-overlay" id="event-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="modal-title">Event Title</h2>
+                <button class="close-btn" onclick="closeModal('event-modal')">×</button>
+            </div>
+            <div id="modal-body">
+                <!-- Populated dynamically -->
+            </div>
+            <div style="margin-top: 25px;">
+                <p style="text-align: center; font-size: 13px; color: var(--text-dim); margin-bottom: 10px;">Your RSVP Status</p>
+                <div class="rsvp-container">
+                    <button class="rsvp-btn attending" id="rsvp-yes" onclick="setRSVP('attending')">✅ Attending</button>
+                    <button class="rsvp-btn unsure" id="rsvp-maybe" onclick="setRSVP('unsure')">❓ Unsure</button>
+                    <button class="rsvp-btn declined" id="rsvp-no" onclick="setRSVP('declined')">❌ Unable</button>
+                </div>
+                <!-- Delete button (Only visible to unlocked staff) -->
+                <div id="staff-delete-container" style="margin-top: 15px; display: none;">
+                    <button class="btn btn-danger" style="width: 100%;" onclick="deleteCurrentEvent()">🗑️ Delete This Event</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management / Events Team Panel Modal -->
+    <div class="modal-overlay" id="management-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>⚙️ Events Team Control Panel</h2>
+                <button class="close-btn" onclick="closeModal('management-modal')">×</button>
+            </div>
+            <form id="event-form" onsubmit="handleEventSubmit(event)">
+                <div class="form-group">
+                    <label>Event Title</label>
+                    <input type="text" id="evt-title" required placeholder="e.g. Alpine Night Run">
+                </div>
+                <div class="form-group">
+                    <label>Event Category / Type</label>
+                    <select id="evt-type">
+                        <option value="truckfest">🎪 Truckfest + Convoy</option>
+                        <option value="convoy">🚛 Standard Convoy</option>
+                        <option value="charity">❤️ Charity Convoy</option>
+                        <option value="utl_own">🌟 UTL Own Convoy Event</option>
+                        <option value="custom_vtc">🎨 Custom VTC Event</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date & Time (UK Time)</label>
+                    <input type="datetime-local" id="evt-date" required>
+                </div>
+                <div class="form-group">
+                    <label>Simulation Server</label>
+                    <input type="text" id="evt-server" required placeholder="Simulation 1">
+                </div>
+                <div class="form-group">
+                    <label>Route Details</label>
+                    <input type="text" id="evt-route" required placeholder="Innsbruck ➔ Salzburg">
+                </div>
+                <div class="form-group">
+                    <label>Route Map Image (URL or Local Upload)</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="url" id="evt-img-url" placeholder="https://i.imgur.com/..." style="flex: 1;">
+                        <input type="file" id="evt-img-file" accept="image/*" style="font-size: 12px; color: var(--text-dim);">
+                    </div>
+                </div>
+                <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">Publish Event</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- SUPABASE CONFIGURATION ---
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // Replace with your Supabase URL[cite: 7]
+        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your Supabase Anon Key[cite: 7]
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentDate = new Date(2026, 9, 1); // October 2026 default[cite: 7]
+        let currentFilter = 'all';[cite: 7]
+        let activeEventId = null;[cite: 7]
+        let events = [];[cite: 7]
+
+        const categoryColors = {[cite: 7]
+            truckfest: '#1CC8FA',[cite: 7]
+            convoy: '#3498DB',[cite: 7]
+            charity: '#E74C3C',[cite: 7]
+            utl_own: '#9B59B6',[cite: 7]
+            custom_vtc: '#F1C40F'[cite: 7]
+        };
+
+        const STAFF_PASSCODE = 'UTLEvents2026';
+
+        function checkStaffSession() {
+            if (localStorage.getItem('utl_staff_unlocked') === 'true') {
+                document.getElementById('staff-login-btn').style.display = 'none';
+                document.getElementById('management-btn').style.display = 'inline-block';
+                document.getElementById('staff-logout-btn').style.display = 'inline-block';
+                document.getElementById('staff-delete-container').style.display = 'block';
+            } else {
+                document.getElementById('staff-login-btn').style.display = 'inline-block';
+                document.getElementById('management-btn').style.display = 'none';
+                document.getElementById('staff-logout-btn').style.display = 'none';
+                document.getElementById('staff-delete-container').style.display = 'none';
+            }
+        }
+
+        function promptStaffPasscode() {
+            const entered = prompt('Enter Events Team / Management Passcode:');
+            if (entered === STAFF_PASSCODE) {
+                localStorage.setItem('utl_staff_unlocked', 'true');
+                checkStaffSession();
+                alert('✅ Staff panel unlocked successfully!');
+                openManagementModal();
+            } else if (entered !== null) {
+                alert('❌ Incorrect passcode.');
+            }
+        }
+
+        function logoutStaff() {
+            localStorage.removeItem('utl_staff_unlocked');
+            checkStaffSession();
+            alert('🔒 Logged out of staff panel.');
+        }
+
+        // Fetch live events from Supabase for all visitors[cite: 7]
+        async function fetchEvents() {
+            const { data, error } = await supabase
+                .from('utl_events')
+                .select('*')
+                .order('event_date', { ascending: true });[cite: 7]
+
+            if (!error && data) {[cite: 7]
+                events = data.map(e => ({
+                    id: e.id,
+                    title: e.title,
+                    type: e.event_type,
+                    date: e.event_date,
+                    server: e.server,
+                    route: e.route,
+                    routeImage: e.route_image || '',
+                    rsvps: e.rsvps || { attending: 0, unsure: 0, declined: 0 },
+                    userRsvp: null
+                }));
+            }
+            renderCalendar();[cite: 7]
+        }
+
+        function renderCalendar() {[cite: 7]
+            const year = currentDate.getFullYear();[cite: 7]
+            const month = currentDate.getMonth();[cite: 7]
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];[cite: 7]
+            
+            document.getElementById('current-month-label').innerText = `${monthNames[month]} ${year}`;[cite: 7]
+            const grid = document.getElementById('calendar-days-grid');[cite: 7]
+            grid.innerHTML = '';[cite: 7]
+
+            const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;[cite: 7]
+            const totalDays = new Date(year, month + 1, 0).getDate();[cite: 7]
+
+            for (let i = 0; i < firstDayIndex; i++) {[cite: 7]
+                const cell = document.createElement('div');[cite: 7]
+                cell.className = 'calendar-cell other-month';[cite: 7]
+                grid.appendChild(cell);[cite: 7]
+            }
+
+            for (let day = 1; day <= totalDays; day++) {[cite: 7]
+                const cell = document.createElement('div');[cite: 7]
+                cell.className = 'calendar-cell';[cite: 7]
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;[cite: 7]
+                
+                cell.innerHTML = `<span class="cell-number">${day}</span>`;[cite: 7]
+
+                const dayEvents = events.filter(e => e.date.startsWith(dateStr) && (currentFilter === 'all' || e.type === currentFilter));[cite: 7]
+                
+                dayEvents.forEach(evt => {[cite: 7]
+                    const chip = document.createElement('div');[cite: 7]
+                    chip.className = 'event-chip';[cite: 7]
+                    chip.style.backgroundColor = categoryColors[evt.type] || '#1CC8FA';[cite: 7]
+                    chip.style.color = '#0f0a1e';[cite: 7]
+                    chip.innerText = evt.title;[cite: 7]
+                    chip.onclick = () => openEventModal(evt.id);[cite: 7]
+                    cell.appendChild(chip);[cite: 7]
+                });
+
+                grid.appendChild(cell);[cite: 7]
+            }
+        }
+
+        function prevMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
             renderCalendar();
         }
-    }
 
-    function renderCalendar() {
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        
-        document.getElementById('current-month-label').innerText = `${monthNames[month]} ${year}`;
-        const grid = document.getElementById('calendar-days-grid');
-        grid.innerHTML = '';
-
-        const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
-        const totalDays = new Date(year, month + 1, 0).getDate();
-
-        for (let i = 0; i < firstDayIndex; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'calendar-cell other-month';
-            grid.appendChild(cell);
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
         }
 
-        for (let day = 1; day <= totalDays; day++) {
-            const cell = document.createElement('div');
-            cell.className = 'calendar-cell';
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        function filterEvents(type) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            renderCalendar();
+        }
+
+        function openManagementModal() {
+            document.getElementById('management-modal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Save newly created events straight to Supabase[cite: 7]
+        async function handleEventSubmit(e) {[cite: 7]
+            e.preventDefault();[cite: 7]
+            const fileInput = document.getElementById('evt-img-file').files[0];[cite: 7]
+            let imageUrl = document.getElementById('evt-img-url').value.trim();[cite: 7]
+
+            if (fileInput) {[cite: 7]
+                imageUrl = await new Promise((resolve) => {[cite: 7]
+                    const reader = new FileReader();[cite: 7]
+                    reader.onload = (evt) => resolve(evt.target.result);[cite: 7]
+                    reader.readAsDataURL(fileInput);[cite: 7]
+                });
+            }
+
+            const title = document.getElementById('evt-title').value;[cite: 7]
+            const type = document.getElementById('evt-type').value;[cite: 7]
+            const date = document.getElementById('evt-date').value;[cite: 7]
+            const server = document.getElementById('evt-server').value;[cite: 7]
+            const route = document.getElementById('evt-route').value;[cite: 7]
+
+            const { error } = await supabase[cite: 7]
+                .from('utl_events')[cite: 7]
+                .insert({[cite: 7]
+                    title: title,[cite: 7]
+                    event_type: type,[cite: 7]
+                    event_date: date,[cite: 7]
+                    server: server,[cite: 7]
+                    route: route,[cite: 7]
+                    route_image: imageUrl,
+                    rsvps: { attending: 0, unsure: 0, declined: 0 }
+                });
+
+            if (!error) {[cite: 7]
+                closeModal('management-modal');[cite: 7]
+                document.getElementById('event-form').reset();[cite: 7]
+                fetchEvents(); // Refresh live view[cite: 7]
+            } else {
+                alert('Failed to save event: ' + error.message);[cite: 7]
+            }
+        }
+
+        async function deleteCurrentEvent() {
+            if (!activeEventId) return;
+            if (!confirm('Are you sure you want to delete this event?')) return;
+
+            const { error } = await supabase
+                .from('utl_events')
+                .delete()
+                .eq('id', activeEventId);
+
+            if (!error) {
+                closeModal('event-modal');
+                fetchEvents();
+            } else {
+                alert('Failed to delete event: ' + error.message);
+            }
+        }
+
+        function openEventModal(eventId) {
+            activeEventId = eventId;
+            const evt = events.find(e => e.id === eventId);
+            if (!evt) return;
+
+            document.getElementById('modal-title').innerText = evt.title;
             
-            cell.innerHTML = `<span class="cell-number">${day}</span>`;
+            let imgHTML = evt.routeImage ? `<div style="margin-bottom:15px; text-align:center;"><img src="${evt.routeImage}" style="max-width:100%; max-height:200px; border-radius:8px;"></div>` : '';
 
-            const dayEvents = events.filter(e => e.date.startsWith(dateStr) && (currentFilter === 'all' || e.type === currentFilter));
-            
-            dayEvents.forEach(evt => {
-                const chip = document.createElement('div');
-                chip.className = 'event-chip';
-                chip.style.backgroundColor = categoryColors[evt.type] || '#1CC8FA';
-                chip.style.color = '#0f0a1e';
-                chip.innerText = evt.title;
-                chip.onclick = () => openEventModal(evt.id);
-                cell.appendChild(chip);
-            });
+            document.getElementById('modal-body').innerHTML = `
+                ${imgHTML}
+                <p style="margin-bottom: 8px;"><strong>📅 Date & Time:</strong> ${new Date(evt.date).toLocaleString('en-GB')}</p>
+                <p style="margin-bottom: 8px;"><strong>🖥️ Server:</strong> ${evt.server}</p>
+                <p style="margin-bottom: 8px;"><strong>🗺️ Route:</strong> ${evt.route}</p>
+                <div style="display:flex; gap:15px; margin-top:15px; font-size:13px; color:var(--text-dim);">
+                    <span>✅ Attending: <strong>${evt.rsvps.attending}</strong></span>
+                    <span>❓ Unsure: <strong>${evt.rsvps.unsure}</strong></span>
+                    <span>❌ Unable: <strong>${evt.rsvps.declined}</strong></span>
+                </div>
+            `;
 
-            grid.appendChild(cell);
-        }
-    }
+            document.querySelectorAll('.rsvp-btn').forEach(b => b.classList.remove('active'));
+            if (evt.userRsvp) {
+                if (evt.userRsvp === 'attending') document.getElementById('rsvp-yes').classList.add('active');
+                if (evt.userRsvp === 'unsure') document.getElementById('rsvp-maybe').classList.add('active');
+                if (evt.userRsvp === 'declined') document.getElementById('rsvp-no').classList.add('active');
+            }
 
-    // Save newly created events straight to Supabase
-    async function handleEventSubmit(e) {
-        e.preventDefault();
-        const fileInput = document.getElementById('evt-img-file').files[0];
-        let imageUrl = document.getElementById('evt-img-url').value.trim();
-
-        if (fileInput) {
-            imageUrl = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (evt) => resolve(evt.target.result);
-                reader.readAsDataURL(fileInput);
-            });
+            document.getElementById('event-modal').classList.add('active');
         }
 
-        const title = document.getElementById('evt-title').value;
-        const type = document.getElementById('evt-type').value;
-        const date = document.getElementById('evt-date').value;
-        const server = document.getElementById('evt-server').value;
-        const route = document.getElementById('evt-route').value;
+        async function setRSVP(status) {
+            const evt = events.find(e => e.id === activeEventId);
+            if (!evt) return;
 
-        const { error } = await supabase
-            .from('utl_events')
-            .insert({
-                title: title,
-                event_type: type,
-                event_date: date,
-                server: server,
-                route: route,
-                route_image: imageUrl
-            });
+            if (evt.userRsvp) {
+                evt.rsvps[evt.userRsvp]--;
+            }
 
-        if (!error) {
-            closeModal('management-modal');
-            document.getElementById('event-form').reset();
-            fetchEvents(); // Refresh live view
-        } else {
-            alert('Failed to save event: ' + error.message);
+            if (evt.userRsvp === status) {
+                evt.userRsvp = null;
+            } else {
+                evt.userRsvp = status;
+                evt.rsvps[status]++;
+            }
+
+            await supabase
+                .from('utl_events')
+                .update({ rsvps: evt.rsvps })
+                .eq('id', evt.id);
+
+            openEventModal(activeEventId);
+            renderCalendar();
         }
-    }
 
-    // Initial load
-    fetchEvents();
-</script>
+        // Initial load
+        checkStaffSession();[cite: 7]
+        fetchEvents();[cite: 7]
+    </script>
+</body>
+</html>
