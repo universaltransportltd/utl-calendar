@@ -1027,32 +1027,32 @@
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;");
 
-            // Preserve new lines first
-            escaped = escaped.replace(/\n/g, '<br>');
-
-            // Convert Markdown Links: [Link Text](URL) — handles bold/italics inside and multi-line URLs gracefully
-            escaped = escaped.replace(/\[([^\]]+)\]\(\s*(https?:\/\/[^\s\)]+)\s*\)/g, function(match, textContent, url) {
-                const cleanUrl = url.replace(/<br\s*[\/]?>/gi, '').replace(/&amp;/g, '&');
+            // 1. Convert Markdown Links: [Link Text](URL) — robustly handle multi-line URLs, spaces, query parameters, and ampersands
+            escaped = escaped.replace(/\[([^\]]+)\]\s*\(\s*([\s\S]*?)\s*\)/g, function(match, textContent, url) {
+                const cleanUrl = url.replace(/<br\s*[\/]?>/gi, '').replace(/\s+/g, '').replace(/&amp;/g, '&');
                 return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${textContent}</a>`;
             });
 
-            // Convert raw URLs to clickable links
+            // 2. Convert raw standalone URLs to clickable links
             escaped = escaped.replace(/(https?:\/\/[^\s<"]+)/g, function(url) {
                 if (url.includes('href=')) return url;
                 const cleanUrl = url.replace(/&quot;|["']/g, '').replace(/&amp;/g, '&');
                 return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${cleanUrl}</a>`;
             });
 
-            // Bold: **text** or __text__
+            // 3. Bold: **text** or __text__
             escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             escaped = escaped.replace(/__(.*?)__/g, '<strong>$1</strong>');
 
-            // Italic: *text* or _text_
+            // 4. Italic: *text* or _text_
             escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
             escaped = escaped.replace(/_(.*?)_/g, '<em>$1</em>');
 
-            // Underline: <u>text</u>
+            // 5. Underline: <u>text</u>
             escaped = escaped.replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>');
+
+            // 6. Preserve new lines when Enter is pressed
+            escaped = escaped.replace(/\n/g, '<br>');
 
             return escaped;
         }
