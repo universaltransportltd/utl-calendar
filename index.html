@@ -593,7 +593,7 @@
                     <input type="text" id="evt-route" required placeholder="Innsbruck ➔ Salzburg">
                 </div>
                 <div class="form-group">
-                    <label>Event Description (Supports **Bold**, *Italic*, <u>Underline</u>, [Slot](link) & New Lines)</label>
+                    <label>Event Description (Supports **Bold**, *Italic*, <u>Underline</u>, [Slot Name](link) & New Lines)</label>
                     <textarea id="evt-desc" rows="5" placeholder="Additional convoy rules, slot details, or instructions..."></textarea>
                 </div>
                 <div class="form-group">
@@ -1027,32 +1027,40 @@
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;");
 
-            // 1. Convert Markdown Links: [Link Text](URL) — robustly handle multi-line URLs, spaces, query parameters, and ampersands
-            escaped = escaped.replace(/\[([^\]]+)\]\s*\(\s*([\s\S]*?)\s*\)/g, function(match, textContent, url) {
-                const cleanUrl = url.replace(/<br\s*[\/]?>/gi, '').replace(/\s+/g, '').replace(/&amp;/g, '&');
-                return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${textContent}</a>`;
+            // Preserve new lines first
+            escaped = escaped.replace(/\n/g, '<br>');
+
+            // Correct Standard Markdown Links: [Link Text](URL)
+            escaped = escaped.replace(/\[([^\]]+)\]\(\s*(https?:\/\/[^\s\)]+)\s*\)/g, function(match, textContent, url) {
+                const cleanUrl = url.replace(/<br\s*[\/]?>/gi, '').replace(/&amp;/g, '&');
+                
+                // Parse any bold/italics inside the link text content (e.g. [**Slot 19**](url))
+                let formattedText = textContent
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/__(.*?)__/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/_(.*?)_/g, '<em>$1</em>');
+
+                return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${formattedText}</a>`;
             });
 
-            // 2. Convert raw standalone URLs to clickable links
+            // Convert raw standalone URLs to clickable links
             escaped = escaped.replace(/(https?:\/\/[^\s<"]+)/g, function(url) {
                 if (url.includes('href=')) return url;
                 const cleanUrl = url.replace(/&quot;|["']/g, '').replace(/&amp;/g, '&');
                 return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${cleanUrl}</a>`;
             });
 
-            // 3. Bold: **text** or __text__
+            // Bold: **text** or __text__
             escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             escaped = escaped.replace(/__(.*?)__/g, '<strong>$1</strong>');
 
-            // 4. Italic: *text* or _text_
+            // Italic: *text* or _text_
             escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
             escaped = escaped.replace(/_(.*?)_/g, '<em>$1</em>');
 
-            // 5. Underline: <u>text</u>
+            // Underline: <u>text</u>
             escaped = escaped.replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>');
-
-            // 6. Preserve new lines when Enter is pressed
-            escaped = escaped.replace(/\n/g, '<br>');
 
             return escaped;
         }
