@@ -593,8 +593,8 @@
                     <input type="text" id="evt-route" required placeholder="Innsbruck ➔ Salzburg">
                 </div>
                 <div class="form-group">
-                    <label>Event Description (Supports [Parking](link) & New Lines)</label>
-                    <textarea id="evt-desc" rows="4" placeholder="Additional convoy rules, slot details, or instructions..."></textarea>
+                    <label>Event Description (Supports **Bold**, *Italic*, <u>Underline</u>, [Slot](link) & New Lines)</label>
+                    <textarea id="evt-desc" rows="5" placeholder="Additional convoy rules, slot details, or instructions..."></textarea>
                 </div>
                 <div class="form-group">
                     <label>Route Map Image (URL or Local Upload)</label>
@@ -1026,14 +1026,29 @@
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;");
 
-            // Convert [Link Text](url) to clickable anchor
-            escaped = escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">$1</a>');
+            // Convert [Link Text](url) to clickable anchor (supporting complex URLs with query params/ampersands)
+            escaped = escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">$1</a>');
 
             // Convert raw URLs to clickable links
             escaped = escaped.replace(/(https?:\/\/[^\s<]+)/g, function(url) {
                 if (url.includes('href=')) return url;
-                return `<a href="${url}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${url}</a>`;
+                const cleanUrl = url.replace(/&quot;|["']/g, '');
+                return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${cleanUrl}</a>`;
             });
+
+            // Bold: **text** or __text__
+            escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            escaped = escaped.replace(/__(.*?)__/g, '<strong>$1</strong>');
+
+            // Italic: *text* or _text_
+            escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            escaped = escaped.replace(/_(.*?)_/g, '<em>$1</em>');
+
+            // Underline: <u>text</u>
+            escaped = escaped.replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>');
+
+            // Preserve new lines when Enter is pressed
+            escaped = escaped.replace(/\n/g, '<br>');
 
             return escaped;
         }
