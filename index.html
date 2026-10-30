@@ -580,8 +580,8 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptZnhya212cmllZnJ1bGl2bGV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjM1OTgzMywiZXhwIjoyMTAxOTM1ODMzfQ.T2bn16_KraZtIM86ByJDRiVALoLpwN3yZGe7lBifLc4'; 
         
         // DISCORD OAUTH2 & ROLE IDS
-        const DISCORD_CLIENT_ID = '1414051513600573440'; // Replace with Client ID from Developer Portal
-        const DISCORD_GUILD_ID = '1526462744889557002'; // Your Universal Gaming Server ID
+        const DISCORD_CLIENT_ID = '1414051513600573440'; 
+        const DISCORD_GUILD_ID = '1526462744889557002'; 
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
         const MANAGEMENT_ROLE_ID = '1526463140987015308';
@@ -607,11 +607,12 @@
             custom_vtc: '#F1C40F'
         };
 
-        // --- NATIVE DISCORD OAUTH2 LOGIN ---
+        // --- NATIVE DISCORD OAUTH2 LOGIN (Hard-coded Client ID to prevent snowflake errors) ---
         window.loginWithDiscord = function() {
+            const clientId = '1414051513600573440';
             const scope = encodeURIComponent('identify guilds.members.read');
             const redirect = encodeURIComponent(REDIRECT_URI);
-            const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=${scope}`;
+            const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirect}&response_type=token&scope=${scope}`;
             window.location.href = authUrl;
         };
 
@@ -620,7 +621,6 @@
             const accessToken = fragment.get('access_token');
 
             if (accessToken) {
-                // Clear token from URL bar for clean UX
                 window.history.replaceState({}, document.title, window.location.pathname);
                 localStorage.setItem('discord_access_token', accessToken);
             }
@@ -640,7 +640,6 @@
                 localStorage.setItem('utl_user_name', userName);
                 localStorage.setItem('utl_discord_id', userData.id);
 
-                // Update UI button text
                 document.getElementById('discord-btn-text').innerText = userName;
 
                 // 2. Fetch Guild Member Roles
