@@ -141,7 +141,6 @@
             }
         }
 
-        /* Sidebar Overview */
         .sidebar-overview {
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -297,7 +296,6 @@
             transform: scale(1.02);
         }
 
-        /* Modal Overlays */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -372,7 +370,7 @@
             font-size: 14px;
         }
 
-        .form-group input:focus, .form-group select:focus {
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
             border-color: var(--primary-blue);
             outline: none;
         }
@@ -412,7 +410,25 @@
         .rsvp-btn.unsure.active { background: var(--warning); border-color: var(--warning); color: #000; }
         .rsvp-btn.declined.active { background: var(--danger); border-color: var(--danger); color: #fff; }
 
-        /* Lightbox Preview */
+        .staff-rsvp-breakdown {
+            margin-top: 15px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+        }
+
+        .staff-rsvp-breakdown h4 {
+            color: var(--primary-blue);
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .staff-rsvp-category {
+            margin-bottom: 6px;
+        }
+
         .lightbox-card {
             max-width: 90vw;
             max-height: 90vh;
@@ -440,7 +456,6 @@
             <p>Interactive VTC Event & Convoy Calendar</p>
         </div>
         <div class="header-actions">
-            <!-- Dynamic Discord Login / Profile Button -->
             <button class="btn btn-discord" id="discord-login-btn" onclick="loginWithDiscord()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 5px;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.093.252-.19.372-.287a.075.075 0 0 1 .078-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .079.009c.12.098.245.195.372.288a.077.077 0 0 1-.006.128 12.299 12.299 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
                 <span id="discord-btn-text">Login with Discord</span>
@@ -450,22 +465,17 @@
             <span id="current-month-label" class="month-display" style="font-size: 16px;">October 2026</span>
             <button class="btn btn-secondary" onclick="nextMonth()">Next ▶</button>
 
-            <!-- Management Panel & Logout Controls -->
             <button class="btn" id="management-btn" onclick="openManagementModal()">⚙️ Management Panel</button>
             <button class="btn btn-outline" id="staff-logout-btn" style="display: none;" onclick="logoutDiscord()">Log Out</button>
         </div>
     </header>
 
     <main>
-        <!-- Left Sidebar: All Events Overview -->
         <aside class="sidebar-overview">
             <h3>📋 All Scheduled Events <span id="event-count-badge" style="font-size: 12px; color: var(--primary-blue);">(0)</span></h3>
-            <div id="sidebar-events-list" style="display: flex; flex-direction: column; gap: 10px;">
-                <!-- Populated dynamically -->
-            </div>
+            <div id="sidebar-events-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
         </aside>
 
-        <!-- Right Calendar Section -->
         <div class="calendar-section">
             <div class="calendar-controls">
                 <div class="filter-tabs">
@@ -490,16 +500,15 @@
         </div>
     </main>
 
-    <!-- Event Details & RSVP Modal -->
+    <!-- Event Details Modal -->
     <div class="modal-overlay" id="event-modal">
         <div class="modal-card">
             <div class="modal-header">
                 <h2 id="modal-title">Event Title</h2>
                 <button class="close-btn" onclick="closeModal('event-modal')">×</button>
             </div>
-            <div id="modal-body">
-                <!-- Populated dynamically -->
-            </div>
+            <div id="modal-body"></div>
+            
             <div style="margin-top: 25px;">
                 <p style="text-align: center; font-size: 13px; color: var(--text-dim); margin-bottom: 10px;" id="rsvp-status-label">Your RSVP Status</p>
                 <div class="rsvp-container">
@@ -508,13 +517,19 @@
                     <button class="rsvp-btn declined" id="rsvp-no" onclick="setRSVP('declined')">❌ Unable</button>
                 </div>
 
-                <!-- Custom Discord Reminder Button -->
+                <!-- Staff Detailed Name Breakdown -->
+                <div id="staff-rsvp-breakdown-box" class="staff-rsvp-breakdown" style="display: none;">
+                    <h4>👥 Staff RSVP Roster View</h4>
+                    <div class="staff-rsvp-category" id="breakdown-attending">✅ <strong>Attending:</strong> None</div>
+                    <div class="staff-rsvp-category" id="breakdown-unsure">❓ <strong>Unsure:</strong> None</div>
+                    <div class="staff-rsvp-category" id="breakdown-declined">❌ <strong>Unable:</strong> None</div>
+                </div>
+
                 <div style="margin-top: 15px;">
                     <button class="btn btn-secondary" style="width: 100%; border-color: var(--primary-blue);" onclick="triggerDiscordReminder()">🔔 Set Discord Event Reminder</button>
                 </div>
 
-                <!-- Staff Actions (Edit & Delete - Only visible to verified staff) -->
-                <div id="staff-actions-container" style="margin-top: 15px; display: none; display: flex; gap: 10px;">
+                <div id="staff-actions-container" style="margin-top: 15px; display: none; gap: 10px;">
                     <button class="btn btn-secondary" style="flex: 1; border-color: var(--primary-blue);" onclick="openEditEventModal()">✏️ Edit Event</button>
                     <button class="btn btn-danger" style="flex: 1;" onclick="deleteCurrentEvent()">🗑️ Delete Event</button>
                 </div>
@@ -522,14 +537,14 @@
         </div>
     </div>
 
-    <!-- Lightbox Modal for Full Map Enlargement -->
+    <!-- Lightbox Modal -->
     <div class="modal-overlay" id="lightbox-modal" onclick="closeModal('lightbox-modal')">
         <div class="lightbox-card">
             <img id="lightbox-img" src="" alt="Enlarged Route Map">
         </div>
     </div>
 
-    <!-- Management Panel Modal (Create / Edit) -->
+    <!-- Management Modal (Publish / Edit) -->
     <div class="modal-overlay" id="management-modal">
         <div class="modal-card">
             <div class="modal-header">
@@ -565,6 +580,10 @@
                     <input type="text" id="evt-route" required placeholder="Innsbruck ➔ Salzburg">
                 </div>
                 <div class="form-group">
+                    <label>Event Description</label>
+                    <textarea id="evt-desc" rows="3" placeholder="Additional convoy rules, voice channels, slot details, or instructions..."></textarea>
+                </div>
+                <div class="form-group">
                     <label>Route Map Image (URL or Local Upload)</label>
                     <div class="file-input-wrapper">
                         <input type="url" id="evt-img-url" placeholder="https://i.imgur.com/...">
@@ -577,11 +596,9 @@
     </div>
 
     <script>
-        // --- CONFIGURATION ---
         const SUPABASE_URL = 'https://jmfxrkmvriefrulivley.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptZnhya212cmllZnJ1bGl2bGV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjM1OTgzMywiZXhwIjoyMTAxOTM1ODMzfQ.T2bn16_KraZtIM86ByJDRiVALoLpwN3yZGe7lBifLc4'; 
         
-        // DISCORD OAUTH2 & ROLE IDS
         const DISCORD_CLIENT_ID = '1414051513600573440'; 
         const DISCORD_GUILD_ID = '1526462744889557002'; 
         const REDIRECT_URI = window.location.origin + window.location.pathname;
@@ -594,7 +611,7 @@
         try {
             dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         } catch (e) {
-            console.error('Supabase initialization error:', e);
+            console.error('Supabase error:', e);
         }
 
         let currentDate = new Date(2026, 9, 1);
@@ -610,7 +627,6 @@
             custom_vtc: '#F1C40F'
         };
 
-        // --- NATIVE DISCORD OAUTH2 LOGIN ---
         window.loginWithDiscord = function() {
             const scope = encodeURIComponent('identify guilds guilds.members.read');
             const redirect = encodeURIComponent(REDIRECT_URI);
@@ -631,11 +647,10 @@
             if (!token) return;
 
             try {
-                // 1. Fetch User Identity
                 const userRes = await fetch('https://discord.com/api/v10/users/@me', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                if (!userRes.ok) throw new Error('Failed to fetch user');
+                if (!userRes.ok) throw new Error('Failed user fetch');
                 const userData = await userRes.json();
 
                 const userName = userData.global_name || userData.username;
@@ -644,7 +659,6 @@
 
                 document.getElementById('discord-btn-text').innerText = userName;
 
-                // 2. Query Guild Member Roles with robust fallback
                 try {
                     const memberRes = await fetch(`https://discord.com/api/v10/users/@me/guilds/${DISCORD_GUILD_ID}/member`, {
                         headers: { Authorization: `Bearer ${token}` }
@@ -660,10 +674,10 @@
                         }
                     }
                 } catch (roleErr) {
-                    console.warn("Direct role fetch restricted by CORS/scope, use management passcode fallback if needed.");
+                    console.warn("Direct role query blocked, passcode available.");
                 }
             } catch (err) {
-                console.error('Discord authentication error:', err);
+                console.error('Discord auth error:', err);
             }
 
             updateAuthUI();
@@ -671,11 +685,12 @@
 
         function updateAuthUI() {
             const userName = localStorage.getItem('utl_user_name');
-            const isStaff = localStorage.getItem('utl_staff_unlocked'] === 'true';
+            const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
 
             const btnText = document.getElementById('discord-btn-text');
             const logoutBtn = document.getElementById('staff-logout-btn');
-            const deleteContainer = document.getElementById('staff-actions-container');
+            const staffActions = document.getElementById('staff-actions-container');
+            const rosterBox = document.getElementById('staff-rsvp-breakdown-box');
 
             if (userName) {
                 btnText.innerText = `👤 ${userName}`;
@@ -686,9 +701,11 @@
             }
 
             if (isStaff) {
-                if (deleteContainer) deleteContainer.style.display = 'flex';
+                if (staffActions) staffActions.style.display = 'flex';
+                if (rosterBox) rosterBox.style.display = 'block';
             } else {
-                if (deleteContainer) deleteContainer.style.display = 'none';
+                if (staffActions) staffActions.style.display = 'none';
+                if (rosterBox) rosterBox.style.display = 'none';
             }
         }
 
@@ -709,7 +726,6 @@
                 }
             }
 
-            // Reset form for creating a new event
             document.getElementById('event-form').reset();
             document.getElementById('edit-event-id').value = '';
             document.getElementById('management-modal-title').innerText = '⚙️ Events Team Control Panel (Publish)';
@@ -725,19 +741,17 @@
 
             closeModal('event-modal');
 
-            // Populate form with existing event data
             document.getElementById('edit-event-id').value = evt.id;
             document.getElementById('evt-title').value = evt.title;
             document.getElementById('evt-type').value = evt.type;
             
-            // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
             if (evt.date) {
-                const cleanDate = evt.date.slice(0, 16);
-                document.getElementById('evt-date').value = cleanDate;
+                document.getElementById('evt-date').value = evt.date.slice(0, 16);
             }
 
             document.getElementById('evt-server').value = evt.server || '';
             document.getElementById('evt-route').value = evt.route || '';
+            document.getElementById('evt-desc').value = evt.description || '';
             document.getElementById('evt-img-url').value = evt.routeImage || '';
 
             document.getElementById('management-modal-title').innerText = '✏️ Edit Event: ' + evt.title;
@@ -776,6 +790,7 @@
                         date: e.event_date,
                         server: e.server,
                         route: e.route,
+                        description: e.description || '',
                         routeImage: e.route_image || '',
                         rsvps: e.rsvps || { attending: 0, unsure: 0, declined: 0 },
                         driverRsvps: e.driver_rsvps || {}
@@ -944,17 +959,18 @@
             const date = document.getElementById('evt-date').value;
             const server = document.getElementById('evt-server').value;
             const route = document.getElementById('evt-route').value;
+            const desc = document.getElementById('evt-desc').value;
 
             let error = null;
 
             if (editId) {
-                // Update existing event
                 const updatePayload = {
                     title: title,
                     event_type: type,
                     event_date: date,
                     server: server,
-                    route: route
+                    route: route,
+                    description: desc
                 };
                 if (imageUrl) updatePayload.route_image = imageUrl;
 
@@ -964,7 +980,6 @@
                     .eq('id', editId);
                 error = res.error;
             } else {
-                // Insert new event
                 const res = await dbClient
                     .from('utl_events')
                     .insert({
@@ -973,6 +988,7 @@
                         event_date: date,
                         server: server,
                         route: route,
+                        description: desc,
                         route_image: imageUrl || null,
                         rsvps: { attending: 0, unsure: 0, declined: 0 },
                         driver_rsvps: {}
@@ -1028,17 +1044,39 @@
                    </div>` 
                 : '';
 
+            let descHTML = evt.description 
+                ? `<p style="margin-bottom: 12px; background: var(--bg-dark); padding: 10px; border-radius: 6px; font-size: 13px; color: var(--text-dim);"><strong>📝 Description:</strong><br>${evt.description}</p>`
+                : '';
+
             document.getElementById('modal-body').innerHTML = `
                 ${imgHTML}
                 <p style="margin-bottom: 8px;"><strong>📅 Date & Time:</strong> ${new Date(evt.date).toLocaleString('en-GB')}</p>
                 <p style="margin-bottom: 8px;"><strong>🖥️ Server:</strong> ${evt.server}</p>
                 <p style="margin-bottom: 8px;"><strong>🗺️ Route:</strong> ${evt.route}</p>
+                ${descHTML}
                 <div style="display:flex; gap:15px; margin-top:15px; font-size:13px; color:var(--text-dim);">
                     <span>✅ Attending: <strong>${evt.rsvps.attending}</strong></span>
                     <span>❓ Unsure: <strong>${evt.rsvps.unsure}</strong></span>
                     <span>❌ Unable: <strong>${evt.rsvps.declined}</strong></span>
                 </div>
             `;
+
+            // Populate Staff Name Breakdown Lists
+            const attendingList = [];
+            const unsureList = [];
+            const declinedList = [];
+
+            if (evt.driverRsvps) {
+                Object.entries(evt.driverRsvps).forEach(([driverName, status]) => {
+                    if (status === 'attending') attendingList.push(driverName);
+                    if (status === 'unsure') unsureList.push(driverName);
+                    if (status === 'declined') declinedList.push(driverName);
+                });
+            }
+
+            document.getElementById('breakdown-attending').innerHTML = `✅ <strong>Attending (${attendingList.length}):</strong> ${attendingList.length ? attendingList.join(', ') : 'None'}`;
+            document.getElementById('breakdown-unsure').innerHTML = `❓ <strong>Unsure (${unsureList.length}):</strong> ${unsureList.length ? unsureList.join(', ') : 'None'}`;
+            document.getElementById('breakdown-declined').innerHTML = `❌ <strong>Unable (${declinedList.length}):</strong> ${declinedList.length ? declinedList.join(', ') : 'None'}`;
 
             document.querySelectorAll('.rsvp-btn').forEach(b => b.classList.remove('active'));
             
@@ -1048,6 +1086,8 @@
                 if (userRsvp === 'unsure') document.getElementById('rsvp-maybe').classList.add('active');
                 if (userRsvp === 'declined') document.getElementById('rsvp-no').classList.add('active');
             }
+
+            updateAuthUI();
 
             const modal = document.getElementById('event-modal');
             if (modal) modal.classList.add('active');
