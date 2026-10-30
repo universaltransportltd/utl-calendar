@@ -327,6 +327,9 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             max-height: 90vh;
             overflow-y: auto;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
 
         .modal-header {
@@ -368,6 +371,8 @@
             border-radius: 6px;
             color: var(--text-light);
             font-size: 14px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
@@ -417,6 +422,8 @@
             border-radius: 8px;
             padding: 12px;
             font-size: 12px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .staff-rsvp-breakdown h4 {
@@ -444,6 +451,12 @@
             border-radius: 8px;
             border: 2px solid var(--primary-blue);
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        #modal-body {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
     </style>
 </head>
@@ -580,8 +593,8 @@
                     <input type="text" id="evt-route" required placeholder="Innsbruck ➔ Salzburg">
                 </div>
                 <div class="form-group">
-                    <label>Event Description</label>
-                    <textarea id="evt-desc" rows="3" placeholder="Additional convoy rules, voice channels, slot details, or instructions..."></textarea>
+                    <label>Event Description (Supports [Parking](link) & New Lines)</label>
+                    <textarea id="evt-desc" rows="4" placeholder="Additional convoy rules, slot details, or instructions..."></textarea>
                 </div>
                 <div class="form-group">
                     <label>Route Map Image (URL or Local Upload)</label>
@@ -601,9 +614,6 @@
         
         const DISCORD_CLIENT_ID = '1414051513600573440'; 
         const REDIRECT_URI = window.location.origin + window.location.pathname;
-
-        // BisectHosting bot API endpoint URL
-        const BOT_API_URL = 'http://UniversalGaming.bh-games.com:9005';
 
         let dbClient = null;
         try {
@@ -657,19 +667,19 @@
 
                 document.getElementById('discord-btn-text').innerText = userName;
 
-                // Query your BisectHosting bot endpoint to verify staff roles securely via backend
-                try {
-                    const roleCheckRes = await fetch(`${BOT_API_URL}/api/check-staff?userId=${userData.id}`);
-                    if (roleCheckRes.ok) {
-                        const roleData = await roleCheckRes.json();
-                        if (roleData.isStaff) {
-                            localStorage.setItem('utl_staff_unlocked', 'true');
-                        } else {
-                            localStorage.removeItem('utl_staff_unlocked');
-                        }
+                // Check staff authorization directly via Supabase (bypasses BisectHosting SSL/mixed-content block)
+                if (dbClient) {
+                    const { data: staffData, error: staffError } = await dbClient
+                        .from('authorized_staff')
+                        .select('*')
+                        .eq('user_id', userData.id)
+                        .single();
+
+                    if (staffData && !staffError) {
+                        localStorage.setItem('utl_staff_unlocked', 'true');
+                    } else {
+                        localStorage.removeItem('utl_staff_unlocked');
                     }
-                } catch (roleErr) {
-                    console.warn("Could not reach BisectHosting bot API for role check:", roleErr);
                 }
             } catch (err) {
                 console.error('Discord auth error:', err);
@@ -1008,6 +1018,26 @@
             }
         };
 
+        function formatDescription(text) {
+            if (!text) return '';
+            // Basic HTML escape
+            let escaped = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            // Convert [Link Text](url) to clickable anchor
+            escaped = escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">$1</a>');
+
+            // Convert raw URLs to clickable links
+            escaped = escaped.replace(/(https?:\/\/[^\s<]+)/g, function(url) {
+                if (url.includes('href=')) return url;
+                return `<a href="${url}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${url}</a>`;
+            });
+
+            return escaped;
+        }
+
         function openEventModal(eventId) {
             activeEventId = eventId;
             const evt = events.find(e => e.id === eventId);
@@ -1031,7 +1061,7 @@
                 : '';
 
             let descHTML = evt.description 
-                ? `<p style="margin-bottom: 12px; background: var(--bg-dark); padding: 10px; border-radius: 6px; font-size: 13px; color: var(--text-dim);"><strong>📝 Description:</strong><br>${evt.description}</p>`
+                ? `<div style="margin-bottom: 12px; background: var(--bg-dark); padding: 10px; border-radius: 6px; font-size: 13px; color: var(--text-dim); word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap;"><strong>📝 Description:</strong><br>${formatDescription(evt.description)}</div>`
                 : '';
 
             document.getElementById('modal-body').innerHTML = `
