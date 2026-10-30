@@ -1,0 +1,129 @@
+<!-- Add Supabase JS Library in the <head> of index.html -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+    // Initialize Supabase Client
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // Replace with your SUPABASE_URL
+    const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your SUPABASE_ANON_KEY (use public anon key)
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentDate = new Date(2026, 9, 1);
+    let currentFilter = 'all';
+    let activeEventId = null;
+    let events = [];
+
+    const categoryColors = {
+        truckfest: '#1CC8FA',
+        convoy: '#3498DB',
+        charity: '#E74C3C',
+        utl_own: '#9B59B6',
+        custom_vtc: '#F1C40F'
+    };
+
+    // Fetch live events from Supabase for all drivers
+    async function fetchEvents() {
+        const { data, error } = await supabase
+            .from('utl_events')
+            .select('*')
+            .order('event_date', { ascending: true });
+
+        if (!error && data) {
+            events = data.map(e => ({
+                id: e.id,
+                title: e.title,
+                type: e.event_type,
+                date: e.event_date,
+                server: e.server,
+                route: e.route,
+                routeImage: e.route_image || '',
+                rsvps: { attending: 0, unsure: 0, declined: 0 },
+                userRsvp: null
+            }));
+            renderCalendar();
+        }
+    }
+
+    function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
+        document.getElementById('current-month-label').innerText = `${monthNames[month]} ${year}`;
+        const grid = document.getElementById('calendar-days-grid');
+        grid.innerHTML = '';
+
+        const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
+        const totalDays = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDayIndex; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-cell other-month';
+            grid.appendChild(cell);
+        }
+
+        for (let day = 1; day <= totalDays; day++) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-cell';
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            cell.innerHTML = `<span class="cell-number">${day}</span>`;
+
+            const dayEvents = events.filter(e => e.date.startsWith(dateStr) && (currentFilter === 'all' || e.type === currentFilter));
+            
+            dayEvents.forEach(evt => {
+                const chip = document.createElement('div');
+                chip.className = 'event-chip';
+                chip.style.backgroundColor = categoryColors[evt.type] || '#1CC8FA';
+                chip.style.color = '#0f0a1e';
+                chip.innerText = evt.title;
+                chip.onclick = () => openEventModal(evt.id);
+                cell.appendChild(chip);
+            });
+
+            grid.appendChild(cell);
+        }
+    }
+
+    // Save newly created events straight to Supabase
+    async function handleEventSubmit(e) {
+        e.preventDefault();
+        const fileInput = document.getElementById('evt-img-file').files[0];
+        let imageUrl = document.getElementById('evt-img-url').value.trim();
+
+        if (fileInput) {
+            imageUrl = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (evt) => resolve(evt.target.result);
+                reader.readAsDataURL(fileInput);
+            });
+        }
+
+        const title = document.getElementById('evt-title').value;
+        const type = document.getElementById('evt-type').value;
+        const date = document.getElementById('evt-date').value;
+        const server = document.getElementById('evt-server').value;
+        const route = document.getElementById('evt-route').value;
+
+        const { error } = await supabase
+            .from('utl_events')
+            .insert({
+                title: title,
+                event_type: type,
+                event_date: date,
+                server: server,
+                route: route,
+                route_image: imageUrl
+            });
+
+        if (!error) {
+            closeModal('management-modal');
+            document.getElementById('event-form').reset();
+            fetchEvents(); // Refresh live view
+        } else {
+            alert('Failed to save event: ' + error.message);
+        }
+    }
+
+    // Initial load
+    fetchEvents();
+</script>
