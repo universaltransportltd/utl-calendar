@@ -454,9 +454,15 @@
 
     <script>
         // --- SUPABASE CONFIGURATION ---
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // Replace with your Supabase URL
-        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your Supabase Anon Key
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_URL = 'https://jmfxrkmvriefrulivley.supabase.co'; // <-- REPLACE WITH YOUR SUPABASE URL
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptZnhya212cmllZnJ1bGl2bGV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjM1OTgzMywiZXhwIjoyMTAxOTM1ODMzfQ.T2bn16_KraZtIM86ByJDRiVALoLpwN3yZGe7lBifLc4'; // <-- REPLACE WITH YOUR SUPABASE ANON KEY
+        
+        let supabase = null;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {
+            console.error('Supabase initialization error:', e);
+        }
 
         let currentDate = new Date(2026, 9, 1); // October 2026 default
         let currentFilter = 'all';
@@ -505,25 +511,34 @@
             alert('🔒 Logged out of staff panel.');
         }
 
-        // Fetch live events from Supabase for all visitors
+        // Fetch live events from Supabase safely
         async function fetchEvents() {
-            const { data, error } = await supabase
-                .from('utl_events')
-                .select('*')
-                .order('event_date', { ascending: true });
+            if (!supabase) {
+                renderCalendar();
+                return;
+            }
 
-            if (!error && data) {
-                events = data.map(e => ({
-                    id: e.id,
-                    title: e.title,
-                    type: e.event_type,
-                    date: e.event_date,
-                    server: e.server,
-                    route: e.route,
-                    routeImage: e.route_image || '',
-                    rsvps: e.rsvps || { attending: 0, unsure: 0, declined: 0 },
-                    userRsvp: null
-                }));
+            try {
+                const { data, error } = await supabase
+                    .from('utl_events')
+                    .select('*')
+                    .order('event_date', { ascending: true });
+
+                if (!error && data) {
+                    events = data.map(e => ({
+                        id: e.id,
+                        title: e.title,
+                        type: e.event_type,
+                        date: e.event_date,
+                        server: e.server,
+                        route: e.route,
+                        routeImage: e.route_image || '',
+                        rsvps: e.rsvps || { attending: 0, unsure: 0, declined: 0 },
+                        userRsvp: null
+                    }));
+                }
+            } catch (err) {
+                console.error('Fetch error:', err);
             }
             renderCalendar();
         }
@@ -533,8 +548,11 @@
             const month = currentDate.getMonth();
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             
-            document.getElementById('current-month-label').innerText = `${monthNames[month]} ${year}`;
+            const monthLabel = document.getElementById('current-month-label');
+            if (monthLabel) monthLabel.innerText = `${monthNames[month]} ${year}`;
+            
             const grid = document.getElementById('calendar-days-grid');
+            if (!grid) return;
             grid.innerHTML = '';
 
             const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
@@ -553,7 +571,7 @@
                 
                 cell.innerHTML = `<span class="cell-number">${day}</span>`;
 
-                const dayEvents = events.filter(e => e.date.startsWith(dateStr) && (currentFilter === 'all' || e.type === currentFilter));
+                const dayEvents = events.filter(e => e.date && e.date.startsWith(dateStr) && (currentFilter === 'all' || e.type === currentFilter));
                 
                 dayEvents.forEach(evt => {
                     const chip = document.createElement('div');
@@ -597,6 +615,11 @@
         // Save newly created events straight to Supabase
         async function handleEventSubmit(e) {
             e.preventDefault();
+            if (!supabase) {
+                alert('Supabase is not configured.');
+                return;
+            }
+
             const fileInput = document.getElementById('evt-img-file').files[0];
             let imageUrl = document.getElementById('evt-img-url').value.trim();
 
@@ -629,14 +652,14 @@
             if (!error) {
                 closeModal('management-modal');
                 document.getElementById('event-form').reset();
-                fetchEvents(); // Refresh live view
+                fetchEvents();
             } else {
                 alert('Failed to save event: ' + error.message);
             }
         }
 
         async function deleteCurrentEvent() {
-            if (!activeEventId) return;
+            if (!activeEventId || !supabase) return;
             if (!confirm('Are you sure you want to delete this event?')) return;
 
             const { error } = await supabase
@@ -685,7 +708,7 @@
 
         async function setRSVP(status) {
             const evt = events.find(e => e.id === activeEventId);
-            if (!evt) return;
+            if (!evt || !supabase) return;
 
             if (evt.userRsvp) {
                 evt.rsvps[evt.userRsvp]--;
@@ -707,7 +730,7 @@
             renderCalendar();
         }
 
-        // Initial load
+        // Initialize session & fetch data
         checkStaffSession();
         fetchEvents();
     </script>
