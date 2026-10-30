@@ -600,12 +600,10 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptZnhya212cmllZnJ1bGl2bGV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjM1OTgzMywiZXhwIjoyMTAxOTM1ODMzfQ.T2bn16_KraZtIM86ByJDRiVALoLpwN3yZGe7lBifLc4'; 
         
         const DISCORD_CLIENT_ID = '1414051513600573440'; 
-        const DISCORD_GUILD_ID = '1526462744889557002'; 
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
-        const MANAGEMENT_ROLE_ID = '1526463140987015308';
-        const EVENTS_TEAM_ROLE_ID = '1526955991092953118';
-        const STAFF_PASSCODE = 'UTLEvents2026';
+        // BisectHosting bot API endpoint URL
+        const BOT_API_URL = 'http://UniversalGaming.bh-games.com:9005';
 
         let dbClient = null;
         try {
@@ -659,22 +657,19 @@
 
                 document.getElementById('discord-btn-text').innerText = userName;
 
+                // Query your BisectHosting bot endpoint to verify staff roles securely via backend
                 try {
-                    const memberRes = await fetch(`https://discord.com/api/v10/users/@me/guilds/${DISCORD_GUILD_ID}/member`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-
-                    if (memberRes.ok) {
-                        const memberData = await memberRes.json();
-                        const userRoles = memberData.roles || [];
-                        const isStaff = userRoles.includes(MANAGEMENT_ROLE_ID) || userRoles.includes(EVENTS_TEAM_ROLE_ID);
-                        
-                        if (isStaff) {
+                    const roleCheckRes = await fetch(`${BOT_API_URL}/api/check-staff?userId=${userData.id}`);
+                    if (roleCheckRes.ok) {
+                        const roleData = await roleCheckRes.json();
+                        if (roleData.isStaff) {
                             localStorage.setItem('utl_staff_unlocked', 'true');
+                        } else {
+                            localStorage.removeItem('utl_staff_unlocked');
                         }
                     }
                 } catch (roleErr) {
-                    console.warn("Direct role query blocked, passcode available.");
+                    console.warn("Could not reach BisectHosting bot API for role check:", roleErr);
                 }
             } catch (err) {
                 console.error('Discord auth error:', err);
@@ -713,17 +708,8 @@
             const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
             
             if (!isStaff) {
-                const pass = prompt('Enter Events Team / Management Passcode:');
-                if (pass === STAFF_PASSCODE) {
-                    localStorage.setItem('utl_staff_unlocked', 'true');
-                    updateAuthUI();
-                    alert('✅ Management Panel unlocked!');
-                } else if (pass !== null) {
-                    alert('❌ Incorrect passcode.');
-                    return;
-                } else {
-                    return;
-                }
+                alert('❌ Access denied. You must be logged in with a Discord account holding the Management or Events Team role.');
+                return;
             }
 
             document.getElementById('event-form').reset();
@@ -1061,7 +1047,6 @@
                 </div>
             `;
 
-            // Populate Staff Name Breakdown Lists
             const attendingList = [];
             const unsureList = [];
             const declinedList = [];
