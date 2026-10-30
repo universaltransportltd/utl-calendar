@@ -341,7 +341,6 @@
 
     <header>
         <div class="header-logo">
-            <!-- Logo with fallback text if image fails to load -->
             <img src="UTL3DLong.jpg" alt="Universal Transport Ltd Logo" onerror="this.style.display='none'; document.getElementById('fallback-title').style.display='block';">
             <span id="fallback-title" style="display:none;">UNIVERSAL TRANSPORT LTD</span>
             <p>Interactive VTC Event & Convoy Calendar</p>
@@ -361,11 +360,11 @@
     <main>
         <div class="calendar-controls">
             <div class="filter-tabs">
-                <button class="filter-tab active" onclick="filterEvents('all')">All Events</button>
-                <button class="filter-tab" onclick="filterEvents('truckfest')">🎪 Truckfest</button>
-                <button class="filter-tab" onclick="filterEvents('convoy')">🚛 Convoys</button>
-                <button class="filter-tab" onclick="filterEvents('charity')">❤️ Charity</button>
-                <button class="filter-tab" onclick="filterEvents('utl_own')">🌟 UTL Exclusive</button>
+                <button class="filter-tab active" onclick="filterEvents('all', event)">All Events</button>
+                <button class="filter-tab" onclick="filterEvents('truckfest', event)">🎪 Truckfest</button>
+                <button class="filter-tab" onclick="filterEvents('convoy', event)">🚛 Convoys</button>
+                <button class="filter-tab" onclick="filterEvents('charity', event)">❤️ Charity</button>
+                <button class="filter-tab" onclick="filterEvents('utl_own', event)">🌟 UTL Exclusive</button>
             </div>
         </div>
 
@@ -406,7 +405,7 @@
         </div>
     </div>
 
-    <!-- Management / Events Team Panel Modal -->
+    <!-- Management Panel Modal -->
     <div class="modal-overlay" id="management-modal">
         <div class="modal-card">
             <div class="modal-header">
@@ -454,8 +453,8 @@
 
     <script>
         // --- SUPABASE CONFIGURATION ---
-        const SUPABASE_URL = 'https://jmfxrkmvriefrulivley.supabase.co'; // <-- REPLACE WITH YOUR SUPABASE URL
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptZnhya212cmllZnJ1bGl2bGV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjM1OTgzMywiZXhwIjoyMTAxOTM1ODMzfQ.T2bn16_KraZtIM86ByJDRiVALoLpwN3yZGe7lBifLc4'; // <-- REPLACE WITH YOUR SUPABASE ANON KEY
+        const SUPABASE_URL = 'https://jmfxrkmvriefrulivley.supabase.co'; 
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptZnhya212cmllZnJ1bGl2bGV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjM1OTgzMywiZXhwIjoyMTAxOTM1ODMzfQ.T2bn16_KraZtIM86ByJDRiVALoLpwN3yZGe7lBifLc4'; 
         
         let supabase = null;
         try {
@@ -597,10 +596,12 @@
             renderCalendar();
         }
 
-        function filterEvents(type) {
+        function filterEvents(type, btnEvent) {
             currentFilter = type;
             document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            if (btnEvent && btnEvent.target) {
+                btnEvent.target.classList.add('active');
+            }
             renderCalendar();
         }
 
@@ -730,8 +731,9 @@
             renderCalendar();
         }
 
-        // Initialize session & fetch data
+        // Initialize session, render empty calendar immediately, then load database events
         checkStaffSession();
+        renderCalendar(); 
         fetchEvents();
     </script>
 </body>
