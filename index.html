@@ -1017,44 +1017,44 @@
             }
         };
 
-        function formatDescription(text) {
+function formatDescription(text) {
             if (!text) return '';
             
-            // Basic HTML escape (prevent script injection)
+            // 1. Temporarily escape HTML to prevent script injection
             let escaped = text
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;");
 
-            // 1. Process Markdown links seamlessly (supports [Link](url) and **[Link](url)**)
+            // 2. Process Markdown links: [Link Text](URL) or **[Link Text](URL)**
             escaped = escaped.replace(/(\*\*)?\[([^\]]+)\]\s*\(\s*([\s\S]*?)\s*\)(\*\*|[^\w]|$)/g, function(match, boldStart, textContent, url, boldEnd) {
                 const cleanUrl = url.replace(/<br\s*[\/]?>/gi, '').replace(/\s+/g, '').replace(/&amp;/g, '&');
                 let innerText = textContent.replace(/\*\*(.*?)\*\*/g, '$1').replace(/__(.*?)__/g, '$1');
                 const isBold = boldStart || (boldEnd && boldEnd.includes('**')) || textContent.includes('**');
                 const display = isBold ? `<strong>${innerText}</strong>` : textContent;
 
-                return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${display}</a>`;
+                return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${display}</a>`;
             });
 
-            // 2. Convert raw standalone URLs to clickable links
+            // 3. Convert raw standalone URLs to clickable links
             escaped = escaped.replace(/(https?:\/\/[^\s<"]+)/g, function(url) {
                 if (url.includes('href=')) return url;
                 const cleanUrl = url.replace(/&quot;|["']/g, '').replace(/&amp;/g, '&');
-                return `<a href="${cleanUrl}" target="_blank" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${cleanUrl}</a>`;
+                return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${cleanUrl}</a>`;
             });
 
-            // 3. Standalone Bold: **text** or __text__
+            // 4. Standalone Bold: **text** or __text__
             escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             escaped = escaped.replace(/__(.*?)__/g, '<strong>$1</strong>');
 
-            // 4. Italic: *text* or _text_
+            // 5. Italic: *text* or _text_
             escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
             escaped = escaped.replace(/_(.*?)_/g, '<em>$1</em>');
 
-            // 5. Underline: <u>text</u>
+            // 6. Underline: <u>text</u>
             escaped = escaped.replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>');
 
-            // 6. Preserve new lines
+            // 7. Preserve new lines
             escaped = escaped.replace(/\n/g, '<br>');
 
             return escaped;
