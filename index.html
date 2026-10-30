@@ -478,7 +478,7 @@
 
         const STAFF_PASSCODE = 'UTLEvents2026';
 
-        function checkStaffSession() {
+        window.checkStaffSession = function() {
             if (localStorage.getItem('utl_staff_unlocked') === 'true') {
                 const loginBtn = document.getElementById('staff-login-btn');
                 const mgmtBtn = document.getElementById('management-btn');
@@ -500,9 +500,9 @@
                 if (logoutBtn) logoutBtn.style.display = 'none';
                 if (deleteContainer) deleteContainer.style.display = 'none';
             }
-        }
+        };
 
-        function promptStaffPasscode() {
+        window.promptStaffPasscode = function() {
             const entered = prompt('Enter Events Team / Management Passcode:');
             if (entered === STAFF_PASSCODE) {
                 localStorage.setItem('utl_staff_unlocked', 'true');
@@ -512,13 +512,13 @@
             } else if (entered !== null) {
                 alert('❌ Incorrect passcode.');
             }
-        }
+        };
 
-        function logoutStaff() {
+        window.logoutStaff = function() {
             localStorage.removeItem('utl_staff_unlocked');
             checkStaffSession();
             alert('🔒 Logged out of staff panel.');
-        }
+        };
 
         // Fetch live events from Supabase safely
         async function fetchEvents() {
@@ -552,7 +552,7 @@
             renderCalendar();
         }
 
-        function renderCalendar() {
+        window.renderCalendar = function() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -594,39 +594,39 @@
 
                 grid.appendChild(cell);
             }
-        }
+        };
 
-        function prevMonth() {
+        window.prevMonth = function() {
             currentDate.setMonth(currentDate.getMonth() - 1);
             renderCalendar();
-        }
+        };
 
-        function nextMonth() {
+        window.nextMonth = function() {
             currentDate.setMonth(currentDate.getMonth() + 1);
             renderCalendar();
-        }
+        };
 
-        function filterEvents(type, btnEvent) {
+        window.filterEvents = function(type, btnEvent) {
             currentFilter = type;
             document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
             if (btnEvent && btnEvent.target) {
                 btnEvent.target.classList.add('active');
             }
             renderCalendar();
-        }
+        };
 
-        function openManagementModal() {
+        window.openManagementModal = function() {
             const modal = document.getElementById('management-modal');
             if (modal) modal.classList.add('active');
-        }
+        };
 
-        function closeModal(modalId) {
+        window.closeModal = function(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) modal.classList.remove('active');
-        }
+        };
 
         // Save newly created events straight to Supabase
-        async function handleEventSubmit(e) {
+        window.handleEventSubmit = async function(e) {
             e.preventDefault();
             if (!dbClient) {
                 alert('Supabase is not configured.');
@@ -669,9 +669,9 @@
             } else {
                 alert('Failed to save event: ' + error.message);
             }
-        }
+        };
 
-        async function deleteCurrentEvent() {
+        window.deleteCurrentEvent = async function() {
             if (!activeEventId || !dbClient) return;
             if (!confirm('Are you sure you want to delete this event?')) return;
 
@@ -686,7 +686,7 @@
             } else {
                 alert('Failed to delete event: ' + error.message);
             }
-        }
+        };
 
         function openEventModal(eventId) {
             activeEventId = eventId;
@@ -720,7 +720,7 @@
             if (modal) modal.classList.add('active');
         }
 
-        async function setRSVP(status) {
+        window.setRSVP = async function(status) {
             const evt = events.find(e => e.id === activeEventId);
             if (!evt || !dbClient) return;
 
@@ -742,7 +742,7 @@
 
             openEventModal(activeEventId);
             renderCalendar();
-        }
+        };
 
         // Initialize session, render empty calendar immediately, then load database events
         checkStaffSession();
