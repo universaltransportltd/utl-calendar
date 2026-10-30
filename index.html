@@ -608,11 +608,10 @@
         };
 
         // --- NATIVE DISCORD OAUTH2 LOGIN (Hard-coded Client ID to prevent snowflake errors) ---
-        window.loginWithDiscord = function() {
-            const clientId = '1414051513600573440';
+            window.loginWithDiscord = function() {
             const scope = encodeURIComponent('identify guilds.members.read');
             const redirect = encodeURIComponent(REDIRECT_URI);
-            const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirect}&response_type=token&scope=${scope}`;
+            const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=${scope}`;
             window.location.href = authUrl;
         };
 
