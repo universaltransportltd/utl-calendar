@@ -254,12 +254,13 @@
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            min-height: 120px;
+            min-height: 135px;
             padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
             transition: border-color 0.2s;
+            overflow: hidden;
         }
 
         .calendar-cell:hover {
@@ -275,6 +276,7 @@
             font-weight: 600;
             color: var(--text-dim);
             align-self: flex-end;
+            margin-bottom: 2px;
         }
 
         .event-chip {
@@ -282,13 +284,14 @@
             padding: 5px 8px;
             border-radius: 4px;
             cursor: pointer;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: break-word;
             font-weight: 500;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 5px;
+            line-height: 1.25;
             transition: transform 0.1s;
         }
 
@@ -433,7 +436,29 @@
         }
 
         .staff-rsvp-category {
-            margin-bottom: 6px;
+            margin-bottom: 8px;
+        }
+
+        .rsvp-user-pill {
+            display: inline-flex;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin: 2px;
+            font-size: 11px;
+            gap: 6px;
+        }
+
+        .rsvp-user-pill button {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            padding: 0;
         }
 
         .lightbox-card {
@@ -530,9 +555,9 @@
                     <button class="rsvp-btn declined" id="rsvp-no" onclick="setRSVP('declined')">❌ Unable</button>
                 </div>
 
-                <!-- Staff Detailed Name Breakdown -->
+                <!-- Staff Detailed Name Breakdown & Editor -->
                 <div id="staff-rsvp-breakdown-box" class="staff-rsvp-breakdown" style="display: none;">
-                    <h4>👥 Staff RSVP Roster View</h4>
+                    <h4>👥 Staff RSVP Roster View & Edit</h4>
                     <div class="staff-rsvp-category" id="breakdown-attending">✅ <strong>Attending:</strong> None</div>
                     <div class="staff-rsvp-category" id="breakdown-unsure">❓ <strong>Unsure:</strong> None</div>
                     <div class="staff-rsvp-category" id="breakdown-declined">❌ <strong>Unable:</strong> None</div>
@@ -633,6 +658,14 @@
             charity: '#E74C3C',
             utl_own: '#9B59B6',
             custom_vtc: '#F1C40F'
+        };
+
+        const categoryEmojis = {
+            truckfest: '🎪',
+            convoy: '🚛',
+            charity: '❤️',
+            utl_own: '🌟',
+            custom_vtc: '🎨'
         };
 
         window.loginWithDiscord = function() {
@@ -831,7 +864,9 @@
                         chip.className = 'event-chip';
                         chip.style.backgroundColor = categoryColors[evt.type] || '#1CC8FA';
                         chip.style.color = '#0f0a1e';
-                        chip.innerText = evt.title;
+                        
+                        const emoji = categoryEmojis[evt.type] || '🚛';
+                        chip.innerHTML = `<span>${emoji}</span><span>${evt.title}</span>`;
                         chip.onclick = () => openEventModal(evt.id);
                         cell.appendChild(chip);
                     });
@@ -867,9 +902,10 @@
                         
                         const dateObj = new Date(evt.date);
                         const formattedDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                        const emoji = categoryEmojis[evt.type] || '🚛';
 
                         item.innerHTML = `
-                            <div class="overview-title">${evt.title}</div>
+                            <div class="overview-title">${emoji} ${evt.title}</div>
                             <div class="overview-meta">
                                 <span>📅 ${formattedDate}</span>
                                 <span>🖥️ ${evt.server}</span>
@@ -1017,16 +1053,14 @@
             }
         };
 
-function formatDescription(text) {
+        function formatDescription(text) {
             if (!text) return '';
             
-            // 1. Temporarily escape HTML to prevent script injection
             let escaped = text
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;");
 
-            // 2. Process Markdown links: [Link Text](URL) or **[Link Text](URL)**
             escaped = escaped.replace(/(\*\*)?\[([^\]]+)\]\s*\(\s*([\s\S]*?)\s*\)(\*\*|[^\w]|$)/g, function(match, boldStart, textContent, url, boldEnd) {
                 const cleanUrl = url.replace(/<br\s*[\/]?>/gi, '').replace(/\s+/g, '').replace(/&amp;/g, '&');
                 let innerText = textContent.replace(/\*\*(.*?)\*\*/g, '$1').replace(/__(.*?)__/g, '$1');
@@ -1036,29 +1070,45 @@ function formatDescription(text) {
                 return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${display}</a>`;
             });
 
-            // 3. Convert raw standalone URLs to clickable links
             escaped = escaped.replace(/(https?:\/\/[^\s<"]+)/g, function(url) {
                 if (url.includes('href=')) return url;
                 const cleanUrl = url.replace(/&quot;|["']/g, '').replace(/&amp;/g, '&');
                 return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${cleanUrl}</a>`;
             });
 
-            // 4. Standalone Bold: **text** or __text__
             escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             escaped = escaped.replace(/__(.*?)__/g, '<strong>$1</strong>');
-
-            // 5. Italic: *text* or _text_
             escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
             escaped = escaped.replace(/_(.*?)_/g, '<em>$1</em>');
-
-            // 6. Underline: <u>text</u>
             escaped = escaped.replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>');
-
-            // 7. Preserve new lines
             escaped = escaped.replace(/\n/g, '<br>');
 
             return escaped;
         }
+
+        window.removeRsvpUser = async function(driverName) {
+            const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
+            if (!isStaff) return;
+
+            const evt = events.find(e => e.id === activeEventId);
+            if (!evt || !evt.driverRsvps) return;
+
+            const currentStatus = evt.driverRsvps[driverName];
+            if (currentStatus) {
+                evt.rsvps[currentStatus] = Math.max(0, (evt.rsvps[currentStatus] || 1) - 1);
+                delete evt.driverRsvps[driverName];
+            }
+
+            if (dbClient) {
+                await dbClient
+                    .from('utl_events')
+                    .update({ rsvps: evt.rsvps, driver_rsvps: evt.driverRsvps })
+                    .eq('id', evt.id);
+            }
+
+            openEventModal(activeEventId);
+            renderCalendar();
+        };
 
         function openEventModal(eventId) {
             activeEventId = eventId;
@@ -1066,7 +1116,9 @@ function formatDescription(text) {
             if (!evt) return;
 
             const userName = localStorage.getItem('utl_user_name');
+            const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
             const statusLabel = document.getElementById('rsvp-status-label');
+            
             if (userName) {
                 statusLabel.innerHTML = `Your RSVP Status (<span style="color:var(--primary-blue);">${userName}</span>)`;
             } else {
@@ -1111,9 +1163,15 @@ function formatDescription(text) {
                 });
             }
 
-            document.getElementById('breakdown-attending').innerHTML = `✅ <strong>Attending (${attendingList.length}):</strong> ${attendingList.length ? attendingList.join(', ') : 'None'}`;
-            document.getElementById('breakdown-unsure').innerHTML = `❓ <strong>Unsure (${unsureList.length}):</strong> ${unsureList.length ? unsureList.join(', ') : 'None'}`;
-            document.getElementById('breakdown-declined').innerHTML = `❌ <strong>Unable (${declinedList.length}):</strong> ${declinedList.length ? declinedList.join(', ') : 'None'}`;
+            const formatRosterList = (list) => {
+                if (list.length === 0) return 'None';
+                if (!isStaff) return list.join(', ');
+                return list.map(name => `<span class="rsvp-user-pill">${name} <button onclick="removeRsvpUser('${name.replace(/'/g, "\\'")}')" title="Remove RSVP">×</button></span>`).join(' ');
+            };
+
+            document.getElementById('breakdown-attending').innerHTML = `✅ <strong>Attending (${attendingList.length}):</strong> ${formatRosterList(attendingList)}`;
+            document.getElementById('breakdown-unsure').innerHTML = `❓ <strong>Unsure (${unsureList.length}):</strong> ${formatRosterList(unsureList)}`;
+            document.getElementById('breakdown-declined').innerHTML = `❌ <strong>Unable (${declinedList.length}):</strong> ${formatRosterList(declinedList)}`;
 
             document.querySelectorAll('.rsvp-btn').forEach(b => b.classList.remove('active'));
             
