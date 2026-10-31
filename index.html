@@ -383,18 +383,6 @@
             outline: none;
         }
 
-        .file-input-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .file-input-wrapper input[type="file"] {
-            background: transparent;
-            border: none;
-            padding: 4px 0;
-        }
-
         .rsvp-container {
             display: flex;
             gap: 10px;
@@ -522,6 +510,7 @@
                     <button class="filter-tab" onclick="filterEvents('convoy', event)">🚛 Convoys</button>
                     <button class="filter-tab" onclick="filterEvents('charity', event)">❤️ Charity</button>
                     <button class="filter-tab" onclick="filterEvents('utl_own', event)">🌟 UTL Exclusive</button>
+                    <button class="filter-tab" onclick="filterEvents('custom_vtc', event)">🎨 Custom VTC</button>
                 </div>
             </div>
 
@@ -622,11 +611,8 @@
                     <textarea id="evt-desc" rows="5" placeholder="Additional convoy rules, slot details, or instructions..."></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Route Map Image (URL or Local Upload)</label>
-                    <div class="file-input-wrapper">
-                        <input type="url" id="evt-img-url" placeholder="https://i.imgur.com/...">
-                        <input type="file" id="evt-img-file" accept="image/*">
-                    </div>
+                    <label>Route Map Image URL</label>
+                    <input type="url" id="evt-img-url" placeholder="https://i.imgur.com/..." required>
                 </div>
                 <button type="submit" class="btn" id="form-submit-btn" style="width: 100%; margin-top: 10px;">Publish Event</button>
             </form>
@@ -974,16 +960,7 @@
             }
 
             const editId = document.getElementById('edit-event-id').value;
-            const fileInput = document.getElementById('evt-img-file').files[0];
-            let imageUrl = document.getElementById('evt-img-url').value.trim();
-
-            if (fileInput) {
-                imageUrl = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (evt) => resolve(evt.target.result);
-                    reader.readAsDataURL(fileInput);
-                });
-            }
+            const imageUrl = document.getElementById('evt-img-url').value.trim();
 
             const title = document.getElementById('evt-title').value;
             const type = document.getElementById('evt-type').value;
@@ -1001,9 +978,9 @@
                     event_date: date,
                     server: server,
                     route: route,
-                    description: desc
+                    description: desc,
+                    route_image: imageUrl
                 };
-                if (imageUrl) updatePayload.route_image = imageUrl;
 
                 const res = await dbClient
                     .from('utl_events')
@@ -1020,7 +997,7 @@
                         server: server,
                         route: route,
                         description: desc,
-                        route_image: imageUrl || null,
+                        route_image: imageUrl,
                         rsvps: { attending: 0, unsure: 0, declined: 0 },
                         driver_rsvps: {}
                     });
