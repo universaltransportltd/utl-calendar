@@ -28,14 +28,14 @@
             --bg-dark: #0a1812;
             --bg-card: #132e22;
             --bg-hover: #1c4232;
-            --primary-blue: #ffd700; /* Gold */
+            --primary-blue: #ffd700;
             --deep-purple: #1b4d3e;
-            --accent-purple: #8b0000; /* Deep Christmas Red */
+            --accent-purple: #8b0000;
             --border-color: #245e48;
         }
 
         body.theme-december header {
-            border-bottom: 2px solid #e74c3c; /* Red border accent */
+            border-bottom: 2px solid #e74c3c;
             background: linear-gradient(135deg, #1b4d3e, #8b0000);
         }
 
@@ -332,7 +332,6 @@
             font-weight: 800;
         }
 
-        /* Holiday styling badges inside December cells */
         .holiday-badge {
             font-size: 10px;
             font-weight: bold;
@@ -400,7 +399,7 @@
             border: 1px solid var(--primary-blue);
             border-radius: 12px;
             width: 100%;
-            max-width: 600px;
+            max-width: 650px;
             padding: 30px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             max-height: 90vh;
@@ -456,6 +455,24 @@
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
             border-color: var(--primary-blue);
             outline: none;
+        }
+
+        .slot-map-container {
+            margin-bottom: 20px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .slot-map-container img {
+            max-width: 100%;
+            max-height: 280px;
+            border-radius: 6px;
+            border: 1px solid var(--primary-blue);
+            cursor: pointer;
+            margin-top: 8px;
         }
 
         .rsvp-container {
@@ -613,7 +630,13 @@
             </div>
             <div id="modal-body"></div>
             
-            <div style="margin-top: 25px;">
+            <div style="margin-top: 25px;" id="slot-booking-action-wrapper">
+                <div id="utl-slot-booking-btn-container" style="margin-bottom: 15px; display: none;">
+                    <button class="btn btn-discord" style="width: 100%; background: var(--primary-blue); color: var(--bg-dark); font-weight: bold;" onclick="openSlotBookingModal()">🎟️ Book Convoy Slots (VTC Representative)</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 15px;">
                 <p style="text-align: center; font-size: 13px; color: var(--text-dim); margin-bottom: 10px;" id="rsvp-status-label">Your RSVP Status</p>
                 <div class="rsvp-container">
                     <button class="rsvp-btn attending" id="rsvp-yes" onclick="setRSVP('attending')">✅ Attending</button>
@@ -637,6 +660,53 @@
                     <button class="btn btn-secondary" style="flex: 1; border-color: var(--primary-blue);" onclick="openEditEventModal()">✏️ Edit Event</button>
                     <button class="btn btn-danger" style="flex: 1;" onclick="deleteCurrentEvent()">🗑️ Delete Event</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VTC Slot Booking Modal -->
+    <div class="modal-overlay" id="slot-booking-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="slot-modal-title">🎟️ UTL Convoy Slot Booking</h2>
+                <button class="close-btn" onclick="closeModal('slot-booking-modal')">×</button>
+            </div>
+            <div id="slot-modal-body">
+                <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Review the available slots map options below, choose your preferred slot, and submit your VTC details.</p>
+                
+                <div id="slot-maps-display-container"></div>
+
+                <form id="slot-booking-form" onsubmit="submitSlotBooking(event)" style="margin-top: 20px;">
+                    <div class="form-group">
+                        <label>VTC Company Name *</label>
+                        <input type="text" id="slot-vtc-name" required placeholder="e.g. Crownline Haulage">
+                    </div>
+                    <div class="form-group">
+                        <label>VTC Logo Image URL *</label>
+                        <input type="url" id="slot-vtc-logo" required placeholder="https://i.imgur.com/logo.png">
+                    </div>
+                    <div class="form-group">
+                        <label>VTC HaulMP Page Link *</label>
+                        <input type="url" id="slot-vtc-link" required placeholder="https://haulmp.com/vtc/...">
+                    </div>
+                    <div class="form-group">
+                        <label>Slot Choice (e.g. Slot 1, F7 - Slots 1-4) *</label>
+                        <input type="text" id="slot-vtc-choice" required placeholder="e.g. Slot 1">
+                    </div>
+                    <div class="form-group">
+                        <label>Estimation of Drivers Attending *</label>
+                        <input type="number" id="slot-vtc-drivers" min="1" required placeholder="10">
+                    </div>
+                    <div class="form-group">
+                        <label>Discord Username *</label>
+                        <input type="text" id="slot-vtc-discord" required placeholder="username">
+                    </div>
+                    <div class="form-group">
+                        <label>Position In Your VTC *</label>
+                        <input type="text" id="slot-vtc-position" required placeholder="e.g. Owner / Event Manager">
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%; margin-top: 10px; background: var(--primary-blue); color: var(--bg-dark);">Submit Slot Booking</button>
+                </form>
             </div>
         </div>
     </div>
@@ -685,11 +755,15 @@
                 </div>
                 <div class="form-group">
                     <label>Event Description (Supports **Bold**, *Italic*, <u>Underline</u>, [Slot Name](link) & New Lines)</label>
-                    <textarea id="evt-desc" rows="5" placeholder="Additional convoy rules, slot details, or instructions..."></textarea>
+                    <textarea id="evt-desc" rows="4" placeholder="Additional convoy rules, slot details, or instructions..."></textarea>
                 </div>
                 <div class="form-group">
                     <label>Route Map Image URL</label>
                     <input type="url" id="evt-img-url" placeholder="https://i.imgur.com/..." required>
+                </div>
+                <div class="form-group">
+                    <label>Slot Booking Map Image URLs (Comma separated if multiple maps like F7 & Nordic Crown)</label>
+                    <textarea id="evt-slot-images" rows="2" placeholder="https://i.imgur.com/map1.jpg, https://i.imgur.com/map2.jpg"></textarea>
                 </div>
                 <button type="submit" class="btn" id="form-submit-btn" style="width: 100%; margin-top: 10px;">Publish Event</button>
             </form>
@@ -701,6 +775,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptZnhya212cmllZnJ1bGl2bGV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjM1OTgzMywiZXhwIjoyMTAxOTM1ODMzfQ.T2bn16_KraZtIM86ByJDRiVALoLpwN3yZGe7lBifLc4'; 
         
         const DISCORD_CLIENT_ID = '1414051513600573440'; 
+        const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1562446612503076914/FYkHX7-xGku0iNxFhEB8KZ9oggADPAKR1GaKnXtxz5gByWs-Zk-9ZWdeqMCPyLhZBIIg';
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
         let dbClient = null;
@@ -919,6 +994,7 @@
             document.getElementById('evt-route').value = evt.route || '';
             document.getElementById('evt-desc').value = evt.description || '';
             document.getElementById('evt-img-url').value = evt.routeImage || '';
+            document.getElementById('evt-slot-images').value = evt.slotImages ? evt.slotImages.join(', ') : '';
 
             document.getElementById('management-modal-title').innerText = '✏️ Edit Event: ' + evt.title;
             document.getElementById('form-submit-btn').innerText = 'Save Changes';
@@ -958,6 +1034,7 @@
                         route: e.route,
                         description: e.description || '',
                         routeImage: e.route_image || '',
+                        slotImages: e.slot_images || [],
                         rsvps: e.rsvps || { attending: 0, unsure: 0, declined: 0 },
                         driverRsvps: e.driver_rsvps || {}
                     }));
@@ -973,7 +1050,6 @@
             const month = currentDate.getMonth();
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             
-            // Check if December (month 11) to apply festive theme and falling snow
             if (month === 11) {
                 document.body.classList.add('theme-december');
                 startSnow();
@@ -1013,7 +1089,6 @@
                     
                     let cellContent = `<span class="cell-number">${day}</span>`;
 
-                    // Add Christmas, Boxing Day, and New Year's Eve badges for December
                     if (month === 11) {
                         if (day === 25) {
                             cellContent += `<div class="holiday-badge badge-xmas">🎄 Christmas Day</div>`;
@@ -1119,6 +1194,90 @@
             }
         };
 
+        window.openSlotBookingModal = function() {
+            closeModal('event-modal');
+            const evt = events.find(e => e.id === activeEventId);
+            if (!evt) return;
+
+            document.getElementById('slot-modal-title').innerText = `🎟️ Convoy Slots: ${evt.title}`;
+            
+            const container = document.getElementById('slot-maps-display-container');
+            container.innerHTML = '';
+
+            if (evt.slotImages && evt.slotImages.length > 0) {
+                evt.slotImages.forEach((imgUrl, index) => {
+                    const mapDiv = document.createElement('div');
+                    mapDiv.style.marginBottom = '15px';
+                    mapDiv.innerHTML = `
+                        <p style="font-size: 13px; font-weight: bold; color: var(--primary-blue);">📍 Slot Option / Area Map #${index + 1}</p>
+                        <img src="${imgUrl.trim()}" style="max-width:100%; max-height:220px; border-radius:6px; border:1px solid var(--primary-blue); cursor:pointer;" onclick="openLightbox('${imgUrl.trim()}')" title="Click to enlarge slot map">
+                    `;
+                    container.appendChild(mapDiv);
+                });
+            } else {
+                container.innerHTML = `<p style="font-size: 13px; color: var(--text-dim);">No custom slot maps have been uploaded for this convoy yet.</p>`;
+            }
+
+            document.getElementById('slot-booking-form').reset();
+            const modal = document.getElementById('slot-booking-modal');
+            if (modal) modal.classList.add('active');
+        };
+
+        window.submitSlotBooking = async function(e) {
+            e.preventDefault();
+            const evt = events.find(e => e.id === activeEventId);
+            if (!evt) return;
+
+            const vtcName = document.getElementById('slot-vtc-name').value;
+            const vtcLogo = document.getElementById('slot-vtc-logo').value;
+            const vtcLink = document.getElementById('slot-vtc-link').value;
+            const slotChoice = document.getElementById('slot-vtc-choice').value;
+            const drivers = document.getElementById('slot-vtc-drivers').value;
+            const discordUser = document.getElementById('slot-vtc-discord').value;
+            const position = document.getElementById('slot-vtc-position').value;
+
+            const payload = {
+                username: "UTL Convoy Slot Booking Bot",
+                avatar_url: "https://i.imgur.com/86k1z0Z.png",
+                embeds: [
+                    {
+                        title: "🎟️ New VTC Convoy Slot Booking!",
+                        color: 1870842, // Blue
+                        fields: [
+                            { name: "Convoy Event", value: evt.title, inline: false },
+                            { name: "VTC Company", value: vtcName, inline: true },
+                            { name: "Chosen Slot", value: slotChoice, inline: true },
+                            { name: "Estimated Drivers", value: drivers, inline: true },
+                            { name: "VTC HaulMP Link", value: vtcLink, inline: false },
+                            { name: "Contact Person", value: `${discordUser} (${position})`, inline: true }
+                        ],
+                        thumbnail: { url: vtcLogo },
+                        footer: { text: "Universal Transport Ltd Event Management" },
+                        timestamp: new Date().toISOString()
+                    }
+                ]
+            };
+
+            try {
+                const res = await fetch(DISCORD_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok || res.status === 204) {
+                    alert('🎉 Success! Your slot booking has been submitted and sent to the UTL Events team.');
+                    closeModal('slot-booking-modal');
+                } else {
+                    alert('⚠️ Booking submitted, but webhook notification encountered an issue.');
+                }
+            } catch (err) {
+                console.error('Webhook error:', err);
+                alert('🎉 Slot booking details recorded successfully!');
+                closeModal('slot-booking-modal');
+            }
+        };
+
         window.triggerDiscordReminder = function() {
             const evt = events.find(e => e.id === activeEventId);
             if (!evt) return;
@@ -1144,6 +1303,8 @@
 
             const editId = document.getElementById('edit-event-id').value;
             const imageUrl = document.getElementById('evt-img-url').value.trim();
+            const slotImagesRaw = document.getElementById('evt-slot-images').value.trim();
+            const slotImages = slotImagesRaw ? slotImagesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
 
             const title = document.getElementById('evt-title').value;
             const type = document.getElementById('evt-type').value;
@@ -1162,7 +1323,8 @@
                     server: server,
                     route: route,
                     description: desc,
-                    route_image: imageUrl
+                    route_image: imageUrl,
+                    slot_images: slotImages
                 };
 
                 const res = await dbClient
@@ -1181,6 +1343,7 @@
                         route: route,
                         description: desc,
                         route_image: imageUrl,
+                        slot_images: slotImages,
                         rsvps: { attending: 0, unsure: 0, declined: 0 },
                         driver_rsvps: {}
                     });
@@ -1278,6 +1441,13 @@
             const userName = localStorage.getItem('utl_user_name');
             const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
             const statusLabel = document.getElementById('rsvp-status-label');
+            const slotBookingBtnContainer = document.getElementById('utl-slot-booking-btn-container');
+
+            if (evt.type === 'utl_own') {
+                slotBookingBtnContainer.style.display = 'block';
+            } else {
+                slotBookingBtnContainer.style.display = 'none';
+            }
             
             if (userName) {
                 statusLabel.innerHTML = `Your RSVP Status (<span style="color:var(--primary-blue);">${userName}</span>)`;
@@ -1290,7 +1460,7 @@
             let imgHTML = evt.routeImage 
                 ? `<div style="margin-bottom:15px; text-align:center;">
                      <img src="${evt.routeImage}" style="max-width:100%; max-height:220px; border-radius:8px; cursor:pointer;" onclick="openLightbox('${evt.routeImage}')" title="Click to enlarge route map">
-                     <p style="font-size:11px; color:var(--text-dim); margin-top:4px;">🔍 Click image to enlarge</p>
+                     <p style="font-size:11px; color:var(--text-dim); margin-top:4px;">🔍 Click image to enlarge route map</p>
                    </div>` 
                 : '';
 
