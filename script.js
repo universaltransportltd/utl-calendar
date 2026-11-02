@@ -12,9 +12,15 @@ try {
     console.error('Supabase error:', e);
 }
 
-let currentDate = new Date();
-let currentFilter = 'all';
-let activeEventId = null;
+// Restore saved month/year from sessionStorage if available
+let savedMonth = sessionStorage.getItem('utl_current_month');
+let savedYear = sessionStorage.getItem('utl_current_year');
+let currentDate = (savedMonth !== null && savedYear !== null) 
+    ? new Date(parseInt(savedYear), parseInt(savedMonth), 1) 
+    : new Date();
+
+let currentFilter = sessionStorage.getItem('utl_current_filter') || 'all';
+let activeEventId = sessionStorage.getItem('utl_active_event_id') || null;
 let events = [];
 
 /* Snow Animation Setup */
@@ -191,6 +197,17 @@ function updateAuthUI() {
     }
 }
 
+function saveNavigationState() {
+    sessionStorage.setItem('utl_current_month', currentDate.getMonth());
+    sessionStorage.setItem('utl_current_year', currentDate.getFullYear());
+    sessionStorage.setItem('utl_current_filter', currentFilter);
+    if (activeEventId) {
+        sessionStorage.setItem('utl_active_event_id', activeEventId);
+    } else {
+        sessionStorage.removeItem('utl_active_event_id');
+    }
+}
+
 // Helper to generate sequential slots across all configured areas
 function getGeneratedSlotsForEvent(evt) {
     let generatedSlots = [];
@@ -340,6 +357,14 @@ async function fetchEvents() {
         console.error('Fetch error:', err);
     }
     renderCalendar();
+
+    // If an event modal was open before refresh, automatically re-open it
+    if (activeEventId) {
+        const targetEvt = events.find(e => e.id === activeEventId);
+        if (targetEvt) {
+            openEventModal(activeEventId);
+        }
+    }
 }
 
 window.renderCalendar = function() {
@@ -347,6 +372,8 @@ window.renderCalendar = function() {
     const month = currentDate.getMonth();
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     
+    saveNavigationState();
+
     if (month === 11) {
         document.body.classList.add('theme-december');
         startSnow();
@@ -411,6 +438,15 @@ window.renderCalendar = function() {
         }
     }
 
+    // Highlight active filter tab on load
+    document.querySelectorAll('.filter-tab').forEach(t => {
+        if (t.textContent.toLowerCase().includes(currentFilter) || (currentFilter === 'all' && t.textContent.includes('All Events'))) {
+            t.classList.add('active');
+        } else {
+            t.classList.remove('active');
+        }
+    });
+
     const sidebarList = document.getElementById('sidebar-events-list');
     const countBadge = document.getElementById('event-count-badge');
     
@@ -469,12 +505,17 @@ window.filterEvents = function(type, btnEvent) {
     if (btnEvent && btnEvent.target) {
         btnEvent.target.classList.add('active');
     }
+    saveNavigationState();
     renderCalendar();
 };
 
 window.closeModal = function(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) modal.classList.remove('active');
+    if (modalId === 'event-modal') {
+        activeEventId = null;
+        sessionStorage.removeItem('utl_active_event_id');
+    }
 };
 
 window.openLightbox = function(imgSrc) {
@@ -799,12 +840,34 @@ window.deleteCurrentEvent = async function() {
 
 function formatDescription(text) {
     if (!text) return '';
-    let escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    
+    let escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    // Convert markdown links [Title](URL)
+    escaped = escaped.replace(/\[([^\]]+)\]\s*\(\s*([\s\S]*?)\s*\)/g, function(match, textContent, url) {
+        const cleanUrl = url.replace(/&amp;/g, '&').trim();
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${textContent}</a>`;
+    });
+
+    // Convert standalone raw URLs into clickable links
     escaped = escaped.replace(/(https?:\/\/[^\s<"]+)/g, function(url) {
         if (url.includes('href=')) return url;
         const cleanUrl = url.replace(/&quot;|["']/g, '').replace(/&amp;/g, '&');
-        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline;">${cleanUrl}</a>`;
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${cleanUrl}</a>`;
     });
+
+    // Convert bold text **text**
+    escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    escaped = escaped.replace(/__(.*?)__/g, '<strong>$1</strong>');
+    
+    // Convert italic text *text*
+    escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    escaped = escaped.replace(/_(.*?)_/g, '<em>$1</em>');
+
+    // Convert line breaks
     return escaped.replace(/\n/g, '<br>');
 }
 
@@ -831,6 +894,8 @@ window.removeRsvpUser = async function(driverName) {
 
 function openEventModal(eventId) {
     activeEventId = eventId;
+    sessionStorage.setItem('utl_active_event_id', eventId);
+    
     const evt = events.find(e => e.id === eventId);
     if (!evt) return;
 
