@@ -191,6 +191,23 @@ function updateAuthUI() {
     }
 }
 
+// Dynamic Slot Builder in Management Modal
+window.addSlotBuilderRow = function(name = '', url = '', count = '1') {
+    const container = document.getElementById('slot-builder-container');
+    if (!container) return;
+
+    const row = document.createElement('div');
+    row.className = 'slot-builder-row';
+    row.style.cssText = 'display: grid; grid-template-columns: 2fr 3fr 1fr 30px; gap: 6px; align-items: center;';
+    row.innerHTML = `
+        <input type="text" class="slot-name-input" placeholder="Area Name (e.g. Slot 1-5)" value="${name}">
+        <input type="url" class="slot-url-input" placeholder="Map Image URL" value="${url}">
+        <input type="number" class="slot-count-input" min="1" placeholder="Slots" value="${count}" title="Number of slots in this area">
+        <button type="button" class="btn btn-danger" style="padding: 6px; font-size: 12px;" onclick="this.parentElement.remove()">✕</button>
+    `;
+    container.appendChild(row);
+};
+
 window.openManagementModal = function() {
     const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
     if (!isStaff) {
@@ -203,6 +220,9 @@ window.openManagementModal = function() {
     document.getElementById('edit-event-id').value = '';
     document.getElementById('management-modal-title').innerText = '⚙️ Events Team Control Panel (Publish)';
     document.getElementById('form-submit-btn').innerText = 'Publish Event';
+    
+    document.getElementById('slot-builder-container').innerHTML = '';
+    addSlotBuilderRow(); // Default empty row
 
     const modal = document.getElementById('management-modal');
     if (modal) modal.classList.add('active');
@@ -227,11 +247,21 @@ window.openEditEventModal = function() {
     document.getElementById('evt-desc').value = evt.description || '';
     document.getElementById('evt-img-url').value = evt.routeImage || '';
     
-    // Safely parse slot images so [object Object] never appears in the edit field
-    const cleanSlotImages = Array.isArray(evt.slotImages) 
-        ? evt.slotImages.map(img => (typeof img === 'string' ? img : (img?.url || ''))).filter(Boolean)
-        : [];
-    document.getElementById('evt-slot-images').value = cleanSlotImages.join(', ');
+    // Populate Slot Builder Rows
+    const container = document.getElementById('slot-builder-container');
+    container.innerHTML = '';
+    
+    const slotImgs = Array.isArray(evt.slotImages) ? evt.slotImages : [];
+    if (slotImgs.length > 0) {
+        slotImgs.forEach(s => {
+            const name = typeof s === 'object' ? (s.name || '') : '';
+            const url = typeof s === 'object' ? (s.url || '') : s;
+            const count = typeof s === 'object' ? (s.count || '1') : '1';
+            addSlotBuilderRow(name, url, count);
+        });
+    } else {
+        addSlotBuilderRow();
+    }
 
     document.getElementById('management-modal-title').innerText = '✏️ Edit Event: ' + evt.title;
     document.getElementById('form-submit-btn').innerText = 'Save Changes';
@@ -429,32 +459,41 @@ window.openLightbox = function(imgSrc) {
 
 window.openSlotBookingModal = function() {
     const evt = events.find(e => e.id === activeEventId);
-    if (!evt) {
-        alert("⚠️ Active event reference not found.");
-        return;
-    }
+    if (!evt) return;
 
     const titleEl = document.getElementById('slot-modal-title');
     if (titleEl) titleEl.innerText = `🎟️ Convoy Slots: ${evt.title}`;
     
-    const standardSlots = [
-        "Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", 
-        "Slot 6", "Slot 7", "Slot 8", "Slot 9", "Slot 10",
-        "F7 / Repair Shop Area", "Non-VTC / Public Overflow"
-    ];
+    // Generate available slots dynamically from the structured slot maps & counts
+    let generatedSlots = [];
+    const slotImgs = Array.isArray(evt.slotImages) ? evt.slotImages : [];
+    
+    slotImgs.forEach(s => {
+        const areaName = typeof s === 'object' ? (s.name || 'Slot Area') : 'Slot Area';
+        const count = typeof s === 'object' ? parseInt(s.count || '1') : 1;
+        if (count > 1) {
+            for (let i = 1; i <= count; i++) {
+                generatedSlots.push(`${areaName} - #${i}`);
+            }
+        } else {
+            generatedSlots.push(areaName);
+        }
+    });
+
+    if (generatedSlots.length === 0) {
+        generatedSlots = ["Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", "Slot 6", "Slot 7", "Slot 8", "Slot 9", "Slot 10", "F7 / Repair Shop Area", "Non-VTC / Public Overflow"];
+    }
 
     const bookedVtcs = Array.isArray(evt.bookedVtcs) ? evt.bookedVtcs : [];
     const bookedSlotChoices = bookedVtcs.map(b => b.slotChoice);
-    
-    // Completely remove booked slots from the available selection list
-    const availableSlots = standardSlots.filter(slot => !bookedSlotChoices.includes(slot));
+    const availableSlots = generatedSlots.filter(slot => !bookedSlotChoices.includes(slot));
 
     const bannerBody = document.getElementById('available-slots-list-body');
     if (bannerBody) {
         if (availableSlots.length > 0) {
             bannerBody.innerHTML = availableSlots.map(s => `<span class="slot-pill-tag">📍 ${s}</span>`).join(' ');
         } else {
-            bannerBody.innerHTML = `<span style="color:var(--danger); font-size:12px; font-weight:bold;">All standard slots have been reserved for this convoy!</span>`;
+            bannerBody.innerHTML = `<span style="color:var(--danger); font-size:12px; font-weight:bold;">All slots have been reserved for this convoy!</span>`;
         }
     }
 
@@ -467,34 +506,27 @@ window.openSlotBookingModal = function() {
             opt.innerText = s;
             slotDropdown.appendChild(opt);
         });
-
-        const customOpt = document.createElement('option');
-        customOpt.value = "Custom / Other Slot";
-        customOpt.innerText = "➕ Other / Custom Slot Area";
-        slotDropdown.appendChild(customOpt);
     }
 
     const container = document.getElementById('slot-maps-display-container');
     if (container) {
         container.innerHTML = '';
-        
-        // Safely parse slot images regardless of whether they were stored as strings or objects
-        const validSlotImages = Array.isArray(evt.slotImages) 
-            ? evt.slotImages.map(img => (typeof img === 'string' ? img : (img?.url || ''))).map(i => i.trim()).filter(Boolean)
-            : [];
+        if (slotImgs.length > 0) {
+            slotImgs.forEach((s, index) => {
+                const name = typeof s === 'object' ? (s.name || `Slot Area #${index + 1}`) : `Slot Area #${index + 1}`;
+                const url = typeof s === 'object' ? (s.url || '') : s;
+                if (!url) return;
 
-        if (validSlotImages.length > 0) {
-            validSlotImages.forEach((cleanUrl, index) => {
                 const mapDiv = document.createElement('div');
                 mapDiv.style.marginBottom = '15px';
                 mapDiv.innerHTML = `
-                    <p style="font-size: 13px; font-weight: bold; color: var(--primary-blue);">📍 Slot Option / Area Map #${index + 1}</p>
-                    <img src="${cleanUrl}" style="max-width:100%; max-height:220px; border-radius:6px; border:1px solid var(--primary-blue); cursor:pointer;" onclick="openLightbox('${cleanUrl}')" title="Click to enlarge slot map">
+                    <p style="font-size: 13px; font-weight: bold; color: var(--primary-blue);">📍 ${name}</p>
+                    <img src="${url}" style="max-width:100%; max-height:220px; border-radius:6px; border:1px solid var(--primary-blue); cursor:pointer;" onclick="openLightbox('${url}')" title="Click to enlarge slot map">
                 `;
                 container.appendChild(mapDiv);
             });
         } else {
-            container.innerHTML = `<p style="font-size: 13px; color: var(--text-dim);">No custom slot maps uploaded for this convoy yet.</p>`;
+            container.innerHTML = `<p style="font-size: 13px; color: var(--text-dim);">No slot maps uploaded for this convoy.</p>`;
         }
     }
 
@@ -504,6 +536,78 @@ window.openSlotBookingModal = function() {
     closeModal('event-modal');
     const slotModal = document.getElementById('slot-booking-modal');
     if (slotModal) slotModal.classList.add('active');
+};
+
+// Staff Manual VTC Slot Assignment
+window.openStaffManualBookingModal = function() {
+    const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
+    if (!isStaff) return;
+
+    const evt = events.find(e => e.id === activeEventId);
+    if (!evt) return;
+
+    let generatedSlots = [];
+    const slotImgs = Array.isArray(evt.slotImages) ? evt.slotImages : [];
+    slotImgs.forEach(s => {
+        const areaName = typeof s === 'object' ? (s.name || 'Slot Area') : 'Slot Area';
+        const count = typeof s === 'object' ? parseInt(s.count || '1') : 1;
+        if (count > 1) {
+            for (let i = 1; i <= count; i++) generatedSlots.push(`${areaName} - #${i}`);
+        } else {
+            generatedSlots.push(areaName);
+        }
+    });
+
+    if (generatedSlots.length === 0) {
+        generatedSlots = ["Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", "Slot 6", "Slot 7", "Slot 8", "Slot 9", "Slot 10", "F7 Area", "Public Overflow"];
+    }
+
+    const bookedVtcs = Array.isArray(evt.bookedVtcs) ? evt.bookedVtcs : [];
+    const bookedSlotChoices = bookedVtcs.map(b => b.slotChoice);
+    const availableSlots = generatedSlots.filter(slot => !bookedSlotChoices.includes(slot));
+
+    const dropdown = document.getElementById('manual-vtc-slot');
+    dropdown.innerHTML = `<option value="">-- Choose Slot to Assign --</option>`;
+    availableSlots.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.innerText = s;
+        dropdown.appendChild(opt);
+    });
+
+    closeModal('event-modal');
+    document.getElementById('staff-manual-booking-modal').classList.add('active');
+};
+
+window.submitStaffManualBooking = async function(e) {
+    e.preventDefault();
+    const evt = events.find(e => e.id === activeEventId);
+    if (!evt) return;
+
+    const newBooking = {
+        vtcName: document.getElementById('manual-vtc-name').value.trim(),
+        vtcLogo: document.getElementById('manual-vtc-logo').value.trim(),
+        vtcLink: document.getElementById('manual-vtc-link').value.trim(),
+        slotChoice: document.getElementById('manual-vtc-slot').value,
+        drivers: document.getElementById('manual-vtc-drivers').value.trim(),
+        discordUser: "Staff Assigned",
+        position: "Manual Entry",
+        bookedAt: new Date().toISOString()
+    };
+
+    const updatedBookedVtcs = Array.isArray(evt.bookedVtcs) ? [...evt.bookedVtcs, newBooking] : [newBooking];
+
+    if (dbClient) {
+        await dbClient
+            .from('utl_events')
+            .update({ booked_vtcs: updatedBookedVtcs })
+            .eq('id', evt.id);
+    }
+
+    alert('✅ VTC manually assigned successfully!');
+    closeModal('staff-manual-booking-modal');
+    await fetchEvents();
+    openEventModal(evt.id);
 };
 
 window.submitSlotBooking = async function(e) {
@@ -520,7 +624,7 @@ window.submitSlotBooking = async function(e) {
     const position = document.getElementById('slot-vtc-position').value.trim();
 
     if (!slotChoice) {
-        alert('⚠️ Please select a slot from the available options dropdown list.');
+        alert('⚠️ Please select an available slot.');
         return;
     }
 
@@ -544,39 +648,33 @@ window.submitSlotBooking = async function(e) {
             .eq('id', evt.id);
     }
 
-    const payload = {
-        username: "UTL Convoy Slot Booking Bot",
-        avatar_url: "https://i.imgur.com/86k1z0Z.png",
-        embeds: [
-            {
-                title: "🎟️ New VTC Convoy Slot Booking!",
-                color: 1870842,
-                fields: [
-                    { name: "Convoy Event", value: evt.title, inline: false },
-                    { name: "VTC Company", value: vtcName, inline: true },
-                    { name: "Chosen Slot", value: slotChoice, inline: true },
-                    { name: "Estimated Drivers", value: drivers, inline: true },
-                    { name: "VTC HaulMP Link", value: vtcLink, inline: false },
-                    { name: "Contact Person", value: `${discordUser} (${position})`, inline: true }
-                ],
-                thumbnail: { url: vtcLogo },
-                footer: { text: "Universal Transport Ltd Event Management" },
-                timestamp: new Date().toISOString()
-            }
-        ]
-    };
-
     try {
         await fetch(DISCORD_WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                username: "UTL Convoy Slot Booking Bot",
+                embeds: [{
+                    title: "🎟️ New VTC Convoy Slot Booking!",
+                    color: 1870842,
+                    fields: [
+                        { name: "Convoy Event", value: evt.title, inline: false },
+                        { name: "VTC Company", value: vtcName, inline: true },
+                        { name: "Chosen Slot", value: slotChoice, inline: true },
+                        { name: "Estimated Drivers", value: drivers, inline: true },
+                        { name: "VTC HaulMP Link", value: vtcLink, inline: false },
+                        { name: "Contact Person", value: `${discordUser} (${position})`, inline: true }
+                    ],
+                    thumbnail: { url: vtcLogo },
+                    timestamp: new Date().toISOString()
+                }]
+            })
         });
     } catch (err) {
         console.error('Webhook error:', err);
     }
 
-    alert('🎉 Success! Your slot booking has been submitted and confirmed.');
+    alert('🎉 Success! Your slot booking has been confirmed.');
     closeModal('slot-booking-modal');
     await fetchEvents();
     openEventModal(evt.id);
@@ -612,12 +710,12 @@ window.triggerDiscordReminder = function() {
     const userName = localStorage.getItem('utl_user_name');
 
     if (!discordId) {
-        alert('⚠️ Please click "Login with Discord" in the header so Universal Bot knows which Discord account to DM!');
+        alert('⚠️ Please click "Login with Discord" in the header!');
         loginWithDiscord();
         return;
     }
 
-    alert(`🔔 Reminder requested for ${userName}!\n\nOur Discord Bot will send a DM reminder to your account prior to the launch of "${evt.title}".`);
+    alert(`🔔 Reminder requested for ${userName}! We'll DM you prior to "${evt.title}".`);
 };
 
 window.handleEventSubmit = async function(e) {
@@ -629,8 +727,18 @@ window.handleEventSubmit = async function(e) {
 
     const editId = document.getElementById('edit-event-id').value;
     const imageUrl = document.getElementById('evt-img-url').value.trim();
-    const slotImagesRaw = document.getElementById('evt-slot-images').value.trim();
-    const slotImages = slotImagesRaw ? slotImagesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+    
+    // Collect Slot Builder Items into structured objects
+    const slotRows = document.querySelectorAll('.slot-builder-row');
+    const slotImages = [];
+    slotRows.forEach(row => {
+        const name = row.querySelector('.slot-name-input').value.trim();
+        const url = row.querySelector('.slot-url-input').value.trim();
+        const count = row.querySelector('.slot-count-input').value.trim() || '1';
+        if (url) {
+            slotImages.push({ name: name || 'Slot Area', url: url, count: count });
+        }
+    });
 
     const title = document.getElementById('evt-title').value;
     const type = document.getElementById('evt-type').value;
@@ -640,40 +748,25 @@ window.handleEventSubmit = async function(e) {
     const desc = document.getElementById('evt-desc').value;
 
     let error = null;
+    const payload = {
+        title: title,
+        event_type: type,
+        event_date: date,
+        server: server,
+        route: route,
+        description: desc,
+        route_image: imageUrl,
+        slot_images: slotImages
+    };
 
     if (editId) {
-        const updatePayload = {
-            title: title,
-            event_type: type,
-            event_date: date,
-            server: server,
-            route: route,
-            description: desc,
-            route_image: imageUrl,
-            slot_images: slotImages
-        };
-
-        const res = await dbClient
-            .from('utl_events')
-            .update(updatePayload)
-            .eq('id', editId);
+        const res = await dbClient.from('utl_events').update(payload).eq('id', editId);
         error = res.error;
     } else {
-        const res = await dbClient
-            .from('utl_events')
-            .insert({
-                title: title,
-                event_type: type,
-                event_date: date,
-                server: server,
-                route: route,
-                description: desc,
-                route_image: imageUrl,
-                slot_images: slotImages,
-                booked_vtcs: [],
-                rsvps: { attending: 0, unsure: 0, declined: 0 },
-                driver_rsvps: {}
-            });
+        payload.booked_vtcs = [];
+        payload.rsvps = { attending: 0, unsure: 0, declined: 0 };
+        payload.driver_rsvps = {};
+        const res = await dbClient.from('utl_events').insert(payload);
         error = res.error;
     }
 
@@ -690,10 +783,7 @@ window.deleteCurrentEvent = async function() {
     if (!activeEventId || !dbClient) return;
     if (!confirm('Are you sure you want to delete this event?')) return;
 
-    const { error } = await dbClient
-        .from('utl_events')
-        .delete()
-        .eq('id', activeEventId);
+    const { error } = await dbClient.from('utl_events').delete().eq('id', activeEventId);
 
     if (!error) {
         closeModal('event-modal');
@@ -705,36 +795,14 @@ window.deleteCurrentEvent = async function() {
 
 function formatDescription(text) {
     if (!text) return '';
-    
-    let escaped = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-
-    escaped = escaped.replace(/(\*\*)?\[([^\]]+)\]\s*\(\s*([\s\S]*?)\s*\)(\*\*|[^\w]|$)/g, function(match, boldStart, textContent, url, boldEnd) {
-        const cleanUrl = url.replace(/<br\s*[\/]?>/gi, '').replace(/\s+/g, '').replace(/&amp;/g, '&');
-        let innerText = textContent.replace(/\*\*(.*?)\*\*/g, '$1').replace(/__(.*?)__/g, '$1');
-        const isBold = boldStart || (boldEnd && boldEnd.includes('**')) || textContent.includes('**');
-        const display = isBold ? `<strong>${innerText}</strong>` : textContent;
-
-        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${display}</a>`;
-    });
-
+    let escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     escaped = escaped.replace(/(https?:\/\/[^\s<"]+)/g, function(url) {
         if (url.includes('href=')) return url;
         const cleanUrl = url.replace(/&quot;|["']/g, '').replace(/&amp;/g, '&');
-        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${cleanUrl}</a>`;
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline;">${cleanUrl}</a>`;
     });
-
-    escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    escaped = escaped.replace(/__(.*?)__/g, '<strong>$1</strong>');
-    escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    escaped = escaped.replace(/_(.*?)_/g, '<em>$1</em>');
-    escaped = escaped.replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>');
-    escaped = escaped.replace(/\n/g, '<br>');
-
-    return escaped;
-};
+    return escaped.replace(/\n/g, '<br>');
+}
 
 window.removeRsvpUser = async function(driverName) {
     const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
@@ -750,10 +818,7 @@ window.removeRsvpUser = async function(driverName) {
     }
 
     if (dbClient) {
-        await dbClient
-            .from('utl_events')
-            .update({ rsvps: evt.rsvps, driver_rsvps: evt.driverRsvps })
-            .eq('id', evt.id);
+        await dbClient.from('utl_events').update({ rsvps: evt.rsvps, driver_rsvps: evt.driverRsvps }).eq('id', evt.id);
     }
 
     openEventModal(activeEventId);
@@ -808,7 +873,7 @@ function openEventModal(eventId) {
     if (userName && statusLabel) {
         statusLabel.innerHTML = `Your RSVP Status (<span style="color:var(--primary-blue);">${userName}</span>)`;
     } else if (statusLabel) {
-        statusLabel.innerHTML = `Your RSVP Status <span style="color:var(--warning); font-size:11px;">(⚠️ Login with Discord to RSVP)</span>`;
+        statusLabel.innerHTML = `Your RSVP Status <span style="color:var(--warning); font-size:11px;">(⚠️ Login with Discord)</span>`;
     }
 
     const modalTitle = document.getElementById('modal-title');
@@ -816,13 +881,12 @@ function openEventModal(eventId) {
     
     let imgHTML = evt.routeImage 
         ? `<div style="margin-bottom:15px; text-align:center;">
-             <img src="${evt.routeImage}" style="max-width:100%; max-height:220px; border-radius:8px; cursor:pointer;" onclick="openLightbox('${evt.routeImage}')" title="Click to enlarge route map">
-             <p style="font-size:11px; color:var(--text-dim); margin-top:4px;">🔍 Click image to enlarge route map</p>
+             <img src="${evt.routeImage}" style="max-width:100%; max-height:220px; border-radius:8px; cursor:pointer;" onclick="openLightbox('${evt.routeImage}')">
            </div>` 
         : '';
 
     let descHTML = evt.description 
-        ? `<div style="margin-bottom: 12px; background: var(--bg-dark); padding: 10px; border-radius: 6px; font-size: 13px; color: var(--text-dim); word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap;"><strong>📝 Description:</strong><br>${formatDescription(evt.description)}</div>`
+        ? `<div style="margin-bottom: 12px; background: var(--bg-dark); padding: 10px; border-radius: 6px; font-size: 13px; color: var(--text-dim); white-space: pre-wrap;"><strong>📝 Description:</strong><br>${formatDescription(evt.description)}</div>`
         : '';
 
     const modalBody = document.getElementById('modal-body');
@@ -833,11 +897,6 @@ function openEventModal(eventId) {
             <p style="margin-bottom: 8px;"><strong>🖥️ Server:</strong> ${evt.server}</p>
             <p style="margin-bottom: 8px;"><strong>🗺️ Route:</strong> ${evt.route}</p>
             ${descHTML}
-            <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:15px; font-size:13px; color:var(--text-dim);">
-                <span>✅ Attending: <strong>${evt.rsvps.attending}</strong></span>
-                <span>❓ Unsure: <strong>${evt.rsvps.unsure}</strong></span>
-                <span>❌ Unable: <strong>${evt.rsvps.declined}</strong></span>
-            </div>
         `;
     }
 
@@ -856,13 +915,13 @@ function openEventModal(eventId) {
     const formatRosterList = (list) => {
         if (list.length === 0) return 'None';
         if (!isStaff) return list.join(', ');
-        return list.map(name => `<span class="rsvp-user-pill">${name} <button onclick="removeRsvpUser('${name.replace(/'/g, "\\'")}')" title="Remove RSVP">×</button></span>`).join(' ');
+        return list.map(name => `<span class="rsvp-user-pill">${name} <button onclick="removeRsvpUser('${name.replace(/'/g, "\\'")}')">×</button></span>`).join(' ');
     };
 
     const formatVtcRosterList = (list) => {
         if (list.length === 0) return 'None';
-        if (!isStaff) return list.map(v => v.vtcName).join(', ');
-        return list.map((v, idx) => `<span class="rsvp-user-pill">${v.vtcName} (${v.slotChoice}) <button onclick="removeBookedVtc(${idx})" title="Cancel VTC Booking">×</button></span>`).join(' ');
+        if (!isStaff) return list.map(v => `${v.vtcName} (${v.slotChoice})`).join(', ');
+        return list.map((v, idx) => `<span class="rsvp-user-pill">${v.vtcName} (${v.slotChoice}) <button onclick="removeBookedVtc(${idx})">×</button></span>`).join(' ');
     };
 
     const breakdownVtcs = document.getElementById('breakdown-vtcs');
@@ -870,13 +929,15 @@ function openEventModal(eventId) {
     const breakdownUnsure = document.getElementById('breakdown-unsure');
     const breakdownDeclined = document.getElementById('breakdown-declined');
 
-    if (breakdownVtcs) breakdownVtcs.innerHTML = `🚛 <strong>Booked VTCs (${bookedVtcsList.length}):</strong> ${formatVtcRosterList(bookedVtcsList)}`;
+    if (breakdownVtcs) {
+        let manualAddBtn = isStaff ? ` <button class="btn btn-secondary" style="font-size:10px; padding:2px 6px; margin-left:6px;" onclick="openStaffManualBookingModal()">➕ Add VTC</button>` : '';
+        breakdownVtcs.innerHTML = `🚛 <strong>Booked VTCs (${bookedVtcsList.length}):</strong>${manualAddBtn}<br>${formatVtcRosterList(bookedVtcsList)}`;
+    }
     if (breakdownAttending) breakdownAttending.innerHTML = `✅ <strong>Attending (${attendingList.length}):</strong> ${formatRosterList(attendingList)}`;
     if (breakdownUnsure) breakdownUnsure.innerHTML = `❓ <strong>Unsure (${unsureList.length}):</strong> ${formatRosterList(unsureList)}`;
     if (breakdownDeclined) breakdownDeclined.innerHTML = `❌ <strong>Unable (${declinedList.length}):</strong> ${formatRosterList(declinedList)}`;
 
     document.querySelectorAll('.rsvp-btn').forEach(b => b.classList.remove('active'));
-    
     const userRsvp = userName && evt.driverRsvps ? evt.driverRsvps[userName] : null;
     if (userRsvp) {
         if (userRsvp === 'attending') document.getElementById('rsvp-yes')?.classList.add('active');
@@ -885,7 +946,6 @@ function openEventModal(eventId) {
     }
 
     updateAuthUI();
-
     const modal = document.getElementById('event-modal');
     if (modal) modal.classList.add('active');
 }
@@ -893,7 +953,7 @@ function openEventModal(eventId) {
 window.setRSVP = async function(status) {
     const userName = localStorage.getItem('utl_user_name');
     if (!userName) {
-        alert('⚠️ Please click "Login with Discord" in the top header first!');
+        alert('⚠️ Please click "Login with Discord" in the header!');
         loginWithDiscord();
         return;
     }
@@ -915,10 +975,7 @@ window.setRSVP = async function(status) {
         evt.rsvps[status] = (evt.rsvps[status] || 0) + 1;
     }
 
-    await dbClient
-        .from('utl_events')
-        .update({ rsvps: evt.rsvps, driver_rsvps: evt.driverRsvps })
-        .eq('id', evt.id);
+    await dbClient.from('utl_events').update({ rsvps: evt.rsvps, driver_rsvps: evt.driverRsvps }).eq('id', evt.id);
 
     openEventModal(activeEventId);
     renderCalendar();
