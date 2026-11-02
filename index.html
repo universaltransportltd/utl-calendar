@@ -787,7 +787,7 @@
         </div>
     </div>
 
-    <!-- Management Modal (Publish / Edit) -->
+<!-- Management Modal (Publish / Edit) -->
     <div class="modal-overlay" id="management-modal">
         <div class="modal-card">
             <div class="modal-header">
@@ -823,18 +823,55 @@
                     <input type="text" id="evt-route" required placeholder="Innsbruck ➔ Salzburg">
                 </div>
                 <div class="form-group">
-                    <label>Event Description (Supports **Bold**, *Italic*, <u>Underline</u>, [Slot Name](link) & New Lines)</label>
+                    <label>Event Description</label>
                     <textarea id="evt-desc" rows="4" placeholder="Additional convoy rules, slot details, or instructions..."></textarea>
                 </div>
                 <div class="form-group">
                     <label>Route Map Image URL</label>
                     <input type="url" id="evt-img-url" placeholder="https://i.imgur.com/..." required>
                 </div>
+                
+                <!-- Dynamic Slot Maps & Capacities Builder -->
                 <div class="form-group">
-                    <label>Slot Booking Map Image URLs (Comma separated if multiple maps like F7 & Nordic Crown)</label>
-                    <textarea id="evt-slot-images" rows="2" placeholder="https://i.imgur.com/map1.jpg, https://i.imgur.com/map2.jpg"></textarea>
+                    <label>📍 Slot Maps, Names & Slot Capacities</label>
+                    <div id="slot-builder-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;"></div>
+                    <button type="button" class="btn btn-secondary" style="font-size: 11px; padding: 5px 10px;" onclick="addSlotBuilderRow()">➕ Add Slot Area / Map</button>
                 </div>
+
                 <button type="submit" class="btn" id="form-submit-btn" style="width: 100%; margin-top: 10px;">Publish Event</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Staff Manual Booking Modal -->
+    <div class="modal-overlay" id="staff-manual-booking-modal">
+        <div class="modal-card" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2>➕ Manual VTC Slot Assignment</h2>
+                <button class="close-btn" onclick="closeModal('staff-manual-booking-modal')">×</button>
+            </div>
+            <form onsubmit="submitStaffManualBooking(event)">
+                <div class="form-group">
+                    <label>VTC Company Name *</label>
+                    <input type="text" id="manual-vtc-name" required placeholder="e.g. Skyline Logistics">
+                </div>
+                <div class="form-group">
+                    <label>VTC Logo URL *</label>
+                    <input type="url" id="manual-vtc-logo" required placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>VTC Page / Link *</label>
+                    <input type="url" id="manual-vtc-link" required placeholder="https://haulmp.com/vtc/...">
+                </div>
+                <div class="form-group">
+                    <label>Assign Slot *</label>
+                    <select id="manual-vtc-slot" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Estimated Drivers *</label>
+                    <input type="number" id="manual-vtc-drivers" min="1" value="10" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%; background: var(--primary-blue); color: var(--bg-dark);">Confirm Manual Booking</button>
             </form>
         </div>
     </div>
