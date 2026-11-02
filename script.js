@@ -279,7 +279,7 @@ window.openEditEventModal = function() {
     const evt = events.find(e => e.id === activeEventId);
     if (!evt) return;
 
-    closeModal('event-modal');
+    closeModal('event-modal', true);
 
     document.getElementById('edit-event-id').value = evt.id;
     document.getElementById('evt-title').value = evt.title;
@@ -509,10 +509,10 @@ window.filterEvents = function(type, btnEvent) {
     renderCalendar();
 };
 
-window.closeModal = function(modalId) {
+window.closeModal = function(modalId, keepActiveId = false) {
     const modal = document.getElementById(modalId);
     if (modal) modal.classList.remove('active');
-    if (modalId === 'event-modal') {
+    if (modalId === 'event-modal' && !keepActiveId) {
         activeEventId = null;
         sessionStorage.removeItem('utl_active_event_id');
     }
@@ -585,7 +585,7 @@ window.openSlotBookingModal = function() {
     const form = document.getElementById('slot-booking-form');
     if (form) form.reset();
     
-    closeModal('event-modal');
+    closeModal('event-modal', true);
     const slotModal = document.getElementById('slot-booking-modal');
     if (slotModal) slotModal.classList.add('active');
 };
@@ -594,23 +594,20 @@ window.openStaffManualBookingModal = function() {
     const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
     if (!isStaff) return;
 
-    // 1. Ensure we have an active event ID from memory or sessionStorage
     if (!activeEventId) {
         activeEventId = sessionStorage.getItem('utl_active_event_id');
     }
 
-    // 2. Find the event, with a safe fallback to the first event if array is populated
     let evt = events.find(e => e.id === activeEventId);
     if (!evt && events.length > 0) {
         evt = events[0];
     }
 
     if (!evt) {
-        alert("⚠️ Error: Events are still loading or no event is selected. Please wait a second and try again.");
+        alert("⚠️ Error: No active event selected.");
         return;
     }
 
-    // Lock in the active event ID
     activeEventId = evt.id;
     sessionStorage.setItem('utl_active_event_id', activeEventId);
 
@@ -630,14 +627,13 @@ window.openStaffManualBookingModal = function() {
         });
     }
 
-    closeModal('event-modal');
+    closeModal('event-modal', true);
     const manualModal = document.getElementById('staff-manual-booking-modal');
     if (manualModal) manualModal.classList.add('active');
 };
 
 window.submitStaffManualBooking = async function(e) {
     e.preventDefault();
-    console.log("🔥 Manual booking button was clicked!");
     
     try {
         const evt = events.find(e => e.id === activeEventId);
@@ -682,6 +678,7 @@ window.submitStaffManualBooking = async function(e) {
         console.error(err);
     }
 };
+
 window.submitSlotBooking = async function(e) {
     e.preventDefault();
     const evt = events.find(e => e.id === activeEventId);
@@ -747,7 +744,7 @@ window.submitSlotBooking = async function(e) {
     }
 
     alert('🎉 Success! Your slot booking has been confirmed.');
-    closeModal('slot-booking-modal');
+    closeModal('slot-booking-modal', true);
     await fetchEvents();
     openEventModal(evt.id);
 };
@@ -867,33 +864,27 @@ window.deleteCurrentEvent = async function() {
 function formatDescription(text) {
     if (!text) return '';
     
-    // 1. Escape HTML entities to keep things secure
     let escaped = text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
-    // 2. Convert markdown links [Text](URL) cleanly
     escaped = escaped.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(match, textContent, url) {
         const cleanUrl = url.replace(/&amp;/g, '&').trim();
         return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${textContent}</a>`;
     });
 
-    // 3. Convert standalone raw URLs into clickable links
     escaped = escaped.replace(/(https?:\/\/[^\s<"]+)(?![^<]*>|[^<>]*<\/a>)/g, function(url) {
         const cleanUrl = url.replace(/&quot;|["']/g, '').replace(/&amp;/g, '&');
         return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${cleanUrl}</a>`;
     });
 
-    // 4. Convert bold text **text**
     escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     escaped = escaped.replace(/__(.*?)__/g, '<strong>$1</strong>');
     
-    // 5. Convert italic text *text*
     escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
     escaped = escaped.replace(/_(.*?)_/g, '<em>$1</em>');
 
-    // 6. Convert line breaks
     return escaped.replace(/\n/g, '<br>');
 }
 
@@ -1007,6 +998,28 @@ function openEventModal(eventId) {
         });
     }
 
+    // Public RSVP counts for non-staff viewers
+    let publicRsvpSummary = document.getElementById('public-rsvp-summary-banner');
+    if (!publicRsvpSummary) {
+        publicRsvpSummary = document.createElement('div');
+        publicRsvpSummary.id = 'public-rsvp-summary-banner';
+        publicRsvpSummary.style.cssText = 'background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 12px; text-align: center; font-size: 13px; font-weight: bold; display: flex; justify-content: space-around; gap: 5px;';
+        const rsvpContainerParent = statusLabel ? statusLabel.parentElement : null;
+        if (rsvpContainerParent) {
+            rsvpContainerParent.insertBefore(publicRsvpSummary, statusLabel);
+        }
+    }
+
+    const attendingCount = evt.rsvps?.attending || attendingList.length;
+    const unsureCount = evt.rsvps?.unsure || unsureList.length;
+    const declinedCount = evt.rsvps?.declined || declinedList.length;
+
+    publicRsvpSummary.innerHTML = `
+        <span style="color: var(--success);">✅ Attending: ${attendingCount}</span>
+        <span style="color: var(--warning);">❓ Unsure: ${unsureCount}</span>
+        <span style="color: var(--danger);">❌ Unable: ${declinedCount}</span>
+    `;
+
     const formatRosterList = (list) => {
         if (list.length === 0) return 'None';
         if (!isStaff) return list.join(', ');
@@ -1028,9 +1041,9 @@ function openEventModal(eventId) {
         let manualAddBtn = isStaff ? ` <button class="btn btn-secondary" style="font-size:10px; padding:2px 6px; margin-left:6px;" onclick="openStaffManualBookingModal()">➕ Add VTC</button>` : '';
         breakdownVtcs.innerHTML = `🚛 <strong>Booked VTCs (${bookedVtcsList.length}):</strong>${manualAddBtn}<br>${formatVtcRosterList(bookedVtcsList)}`;
     }
-    if (breakdownAttending) breakdownAttending.innerHTML = `✅ <strong>Attending (${attendingList.length}):</strong> ${formatRosterList(attendingList)}`;
-    if (breakdownUnsure) breakdownUnsure.innerHTML = `❓ <strong>Unsure (${unsureList.length}):</strong> ${formatRosterList(unsureList)}`;
-    if (breakdownDeclined) breakdownDeclined.innerHTML = `❌ <strong>Unable (${declinedList.length}):</strong> ${formatRosterList(declinedList)}`;
+    if (breakdownAttending) breakdownAttending.innerHTML = `✅ <strong>Attending (${attendingCount}):</strong> ${formatRosterList(attendingList)}`;
+    if (breakdownUnsure) breakdownUnsure.innerHTML = `❓ <strong>Unsure (${unsureCount}):</strong> ${formatRosterList(unsureList)}`;
+    if (breakdownDeclined) breakdownDeclined.innerHTML = `❌ <strong>Unable (${declinedCount}):</strong> ${formatRosterList(declinedList)}`;
 
     document.querySelectorAll('.rsvp-btn').forEach(b => b.classList.remove('active'));
     const userRsvp = userName && evt.driverRsvps ? evt.driverRsvps[userName] : null;
