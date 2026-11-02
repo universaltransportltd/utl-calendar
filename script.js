@@ -518,6 +518,19 @@ window.closeModal = function(modalId, keepActiveId = false) {
     }
 };
 
+// Allow clicking outside any modal card overlay to close it safely
+document.addEventListener('click', function(e) {
+    ['event-modal', 'slot-booking-modal', 'staff-manual-booking-modal', 'management-modal'].forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal && modal.classList.contains('active')) {
+            const card = modal.querySelector('.modal-card');
+            if (card && !card.contains(e.target)) {
+                closeModal(modalId);
+            }
+        }
+    });
+});
+
 window.openLightbox = function(imgSrc) {
     const lightbox = document.getElementById('lightbox-modal');
     const lightboxImg = document.getElementById('lightbox-img');
@@ -924,7 +937,15 @@ function openEventModal(eventId) {
     const bookedVtcsBody = document.getElementById('booked-vtcs-list-body');
     const bookedVtcsCountTag = document.getElementById('booked-vtc-count-tag');
 
-    const bookedVtcsList = Array.isArray(evt.bookedVtcs) ? evt.bookedVtcs : [];
+    // Sort booked VTCs naturally by slot number
+    const bookedVtcsList = Array.isArray(evt.bookedVtcs) ? [...evt.bookedVtcs] : [];
+    bookedVtcsList.sort((a, b) => {
+        const getSlotNum = (slotStr) => {
+            const match = (slotStr || '').match(/\d+/);
+            return match ? parseInt(match[0], 10) : 9999;
+        };
+        return getSlotNum(a.slotChoice) - getSlotNum(b.slotChoice);
+    });
 
     if (evt.type === 'utl_own') {
         if (slotBookingBtnContainer) slotBookingBtnContainer.style.display = 'block';
@@ -935,7 +956,9 @@ function openEventModal(eventId) {
             if (bookedVtcsList.length === 0) {
                 bookedVtcsBody.innerHTML = `<p style="font-size:12px; color:var(--text-dim); text-align:center; padding: 6px;">No VTCs have booked a slot yet.</p>`;
             } else {
-                bookedVtcsBody.innerHTML = bookedVtcsList.map(item => `
+                bookedVtcsBody.innerHTML = bookedVtcsList.map(item => {
+                    const originalIndex = evt.bookedVtcs.indexOf(item);
+                    return `
                     <div class="booked-vtc-item">
                         <div class="booked-vtc-info">
                             <img src="${item.vtcLogo}" class="booked-vtc-logo" onerror="this.src='https://i.imgur.com/86k1z0Z.png'">
@@ -945,10 +968,11 @@ function openEventModal(eventId) {
                             </div>
                         </div>
                         <div style="font-weight:bold; color:var(--primary-blue); font-size:12px;">
-                            📍 ${item.slotChoice}
+                            📍 ${item.slotChoice} ${isStaff ? `<button class="btn btn-danger" style="padding:1px 5px; font-size:10px; margin-left:6px;" onclick="removeBookedVtc(${originalIndex})">×</button>` : ''}
                         </div>
                     </div>
-                `).join('');
+                `;
+                }).join('');
             }
         }
     } else {
@@ -1046,11 +1070,11 @@ function openEventModal(eventId) {
     if (breakdownDeclined) breakdownDeclined.innerHTML = `❌ <strong>Unable (${declinedCount}):</strong> ${formatRosterList(declinedList)}`;
 
     document.querySelectorAll('.rsvp-btn').forEach(b => b.classList.remove('active'));
-    const userRsvp = userName && evt.driverRsvps ? evt.driverRsvps[userName] : null;
-    if (userRsvp) {
-        if (userRsvp === 'attending') document.getElementById('rsvp-yes')?.classList.add('active');
-        if (userRsvp === 'unsure') document.getElementById('rsvp-maybe')?.classList.add('active');
-        if (userRsvp === 'declined') document.getElementById('rsvp-no')?.classList.add('active');
+    const userRusp = userName && evt.driverRsvps ? evt.driverRsvps[userName] : null;
+    if (userRusp) {
+        if (userRusp === 'attending') document.getElementById('rsvp-yes')?.classList.add('active');
+        if (userRusp === 'unsure') document.getElementById('rsvp-maybe')?.classList.add('active');
+        if (userRusp === 'declined') document.getElementById('rsvp-no')?.classList.add('active');
     }
 
     updateAuthUI();
