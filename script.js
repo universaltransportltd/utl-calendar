@@ -19,11 +19,12 @@ let events = [];
 
 /* Snow Animation Setup */
 const canvas = document.getElementById('snow-canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas ? canvas.getContext('2d') : null;
 let flakes = [];
 let animFrameId = null;
 
 function resizeSnowCanvas() {
+    if (!canvas) return;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
@@ -32,6 +33,7 @@ resizeSnowCanvas();
 
 function createFlakes() {
     flakes = [];
+    if (!canvas) return;
     const flakeCount = Math.floor(window.innerWidth / 12);
     for (let i = 0; i < flakeCount; i++) {
         flakes.push({
@@ -45,6 +47,7 @@ function createFlakes() {
 }
 
 function drawSnow() {
+    if (!ctx || !canvas) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.beginPath();
@@ -60,6 +63,7 @@ function drawSnow() {
 }
 
 function updateSnow() {
+    if (!canvas) return;
     for (let i = 0; i < flakes.length; i++) {
         const f = flakes[i];
         f.y += Math.pow(f.d, 2) + 0.8;
@@ -78,14 +82,14 @@ function updateSnow() {
 }
 
 function startSnow() {
-    if (!animFrameId) {
+    if (!animFrameId && canvas) {
         createFlakes();
         drawSnow();
     }
 }
 
 function stopSnow() {
-    if (animFrameId) {
+    if (animFrameId && ctx && canvas) {
         cancelAnimationFrame(animFrameId);
         animFrameId = null;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -138,7 +142,8 @@ async function handleDiscordCallback() {
         localStorage.setItem('utl_user_name', userName);
         localStorage.setItem('utl_discord_id', userData.id);
 
-        document.getElementById('discord-btn-text').innerText = userName;
+        const btnText = document.getElementById('discord-btn-text');
+        if (btnText) btnText.innerText = userName;
 
         if (dbClient) {
             const { data: staffData, error: staffError } = await dbClient
@@ -169,10 +174,10 @@ function updateAuthUI() {
     const staffActions = document.getElementById('staff-actions-container');
     const rosterBox = document.getElementById('staff-rsvp-breakdown-box');
 
-    if (userName) {
+    if (userName && btnText) {
         btnText.innerText = `👤 ${userName}`;
         if (logoutBtn) logoutBtn.style.display = 'inline-block';
-    } else {
+    } else if (btnText) {
         btnText.innerText = 'Login with Discord';
         if (logoutBtn) logoutBtn.style.display = 'none';
     }
@@ -188,13 +193,13 @@ function updateAuthUI() {
 
 window.openManagementModal = function() {
     const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
-    
     if (!isStaff) {
         alert('❌ Access denied. You must be logged in with a Discord account holding the Management or Events Team role.');
         return;
     }
 
-    document.getElementById('event-form').reset();
+    const form = document.getElementById('event-form');
+    if (form) form.reset();
     document.getElementById('edit-event-id').value = '';
     document.getElementById('management-modal-title').innerText = '⚙️ Events Team Control Panel (Publish)';
     document.getElementById('form-submit-btn').innerText = 'Publish Event';
@@ -314,17 +319,12 @@ window.renderCalendar = function() {
             }
 
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            
             let cellContent = `<span class="cell-number">${day}</span>`;
 
             if (month === 11) {
-                if (day === 25) {
-                    cellContent += `<div class="holiday-badge badge-xmas">🎄 Christmas Day</div>`;
-                } else if (day === 26) {
-                    cellContent += `<div class="holiday-badge badge-boxing">🎁 Boxing Day</div>`;
-                } else if (day === 31) {
-                    cellContent += `<div class="holiday-badge badge-NYE">🎆 New Year's Eve</div>`;
-                }
+                if (day === 25) cellContent += `<div class="holiday-badge badge-xmas">🎄 Christmas Day</div>`;
+                else if (day === 26) cellContent += `<div class="holiday-badge badge-boxing">🎁 Boxing Day</div>`;
+                else if (day === 31) cellContent += `<div class="holiday-badge badge-NYE">🎆 New Year's Eve</div>`;
             }
 
             cell.innerHTML = cellContent;
@@ -423,10 +423,15 @@ window.openLightbox = function(imgSrc) {
 };
 
 window.openSlotBookingModal = function() {
+    console.log("Opening slot booking modal for event ID:", activeEventId);
     const evt = events.find(e => e.id === activeEventId);
-    if (!evt) return;
+    if (!evt) {
+        alert("⚠️ Active event reference not found.");
+        return;
+    }
 
-    document.getElementById('slot-modal-title').innerText = `🎟️ Convoy Slots: ${evt.title}`;
+    const titleEl = document.getElementById('slot-modal-title');
+    if (titleEl) titleEl.innerText = `🎟️ Convoy Slots: ${evt.title}`;
     
     const standardSlots = [
         "Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", 
@@ -439,47 +444,55 @@ window.openSlotBookingModal = function() {
     const availableSlots = standardSlots.filter(slot => !bookedSlotChoices.includes(slot));
 
     const bannerBody = document.getElementById('available-slots-list-body');
-    if (availableSlots.length > 0) {
-        bannerBody.innerHTML = availableSlots.map(s => `<span class="slot-pill-tag">📍 ${s}</span>`).join(' ');
-    } else {
-        bannerBody.innerHTML = `<span style="color:var(--danger); font-size:12px; font-weight:bold;">All standard slots have been reserved for this convoy!</span>`;
+    if (bannerBody) {
+        if (availableSlots.length > 0) {
+            bannerBody.innerHTML = availableSlots.map(s => `<span class="slot-pill-tag">📍 ${s}</span>`).join(' ');
+        } else {
+            bannerBody.innerHTML = `<span style="color:var(--danger); font-size:12px; font-weight:bold;">All standard slots have been reserved for this convoy!</span>`;
+        }
     }
 
     const slotDropdown = document.getElementById('slot-vtc-choice');
-    slotDropdown.innerHTML = `<option value="">-- Choose an Available Slot --</option>`;
-    
-    availableSlots.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s;
-        opt.innerText = s;
-        slotDropdown.appendChild(opt);
-    });
-
-    const customOpt = document.createElement('option');
-    customOpt.value = "Custom / Other Slot";
-    customOpt.innerText = "➕ Other / Custom Slot Area";
-    slotDropdown.appendChild(customOpt);
-
-    const container = document.getElementById('slot-maps-display-container');
-    container.innerHTML = '';
-
-    const validSlotImages = Array.isArray(evt.slotImages) ? evt.slotImages.filter(Boolean) : [];
-
-    if (validSlotImages.length > 0) {
-        validSlotImages.forEach((imgUrl, index) => {
-            const mapDiv = document.createElement('div');
-            mapDiv.style.marginBottom = '15px';
-            mapDiv.innerHTML = `
-                <p style="font-size: 13px; font-weight: bold; color: var(--primary-blue);">📍 Slot Option / Area Map #${index + 1}</p>
-                <img src="${imgUrl.trim()}" style="max-width:100%; max-height:220px; border-radius:6px; border:1px solid var(--primary-blue); cursor:pointer;" onclick="openLightbox('${imgUrl.trim()}')" title="Click to enlarge slot map">
-            `;
-            container.appendChild(mapDiv);
+    if (slotDropdown) {
+        slotDropdown.innerHTML = `<option value="">-- Choose an Available Slot --</option>`;
+        availableSlots.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.innerText = s;
+            slotDropdown.appendChild(opt);
         });
-    } else {
-        container.innerHTML = `<p style="font-size: 13px; color: var(--text-dim);">No custom slot maps uploaded for this convoy yet.</p>`;
+
+        const customOpt = document.createElement('option');
+        customOpt.value = "Custom / Other Slot";
+        customOpt.innerText = "➕ Other / Custom Slot Area";
+        slotDropdown.appendChild(customOpt);
     }
 
-    document.getElementById('slot-booking-form').reset();
+    const container = document.getElementById('slot-maps-display-container');
+    if (container) {
+        container.innerHTML = '';
+        const validSlotImages = Array.isArray(evt.slotImages) 
+            ? evt.slotImages.map(img => String(img || '')).filter(img => img.trim().length > 0) 
+            : [];
+
+        if (validSlotImages.length > 0) {
+            validSlotImages.forEach((imgUrl, index) => {
+                const cleanUrl = imgUrl.trim();
+                const mapDiv = document.createElement('div');
+                mapDiv.style.marginBottom = '15px';
+                mapDiv.innerHTML = `
+                    <p style="font-size: 13px; font-weight: bold; color: var(--primary-blue);">📍 Slot Option / Area Map #${index + 1}</p>
+                    <img src="${cleanUrl}" style="max-width:100%; max-height:220px; border-radius:6px; border:1px solid var(--primary-blue); cursor:pointer;" onclick="openLightbox('${cleanUrl}')" title="Click to enlarge slot map">
+                `;
+                container.appendChild(mapDiv);
+            });
+        } else {
+            container.innerHTML = `<p style="font-size: 13px; color: var(--text-dim);">No custom slot maps uploaded for this convoy yet.</p>`;
+        }
+    }
+
+    const form = document.getElementById('slot-booking-form');
+    if (form) form.reset();
     
     closeModal('event-modal');
     const slotModal = document.getElementById('slot-booking-modal');
@@ -756,40 +769,43 @@ function openEventModal(eventId) {
     const bookedVtcsList = Array.isArray(evt.bookedVtcs) ? evt.bookedVtcs : [];
 
     if (evt.type === 'utl_own') {
-        slotBookingBtnContainer.style.display = 'block';
-        bookedVtcsCard.style.display = 'block';
-        bookedVtcsCountTag.innerText = `(${bookedVtcsList.length})`;
+        if (slotBookingBtnContainer) slotBookingBtnContainer.style.display = 'block';
+        if (bookedVtcsCard) bookedVtcsCard.style.display = 'block';
+        if (bookedVtcsCountTag) bookedVtcsCountTag.innerText = `(${bookedVtcsList.length})`;
 
-        if (bookedVtcsList.length === 0) {
-            bookedVtcsBody.innerHTML = `<p style="font-size:12px; color:var(--text-dim); text-align:center; padding: 6px;">No VTCs have booked a slot yet.</p>`;
-        } else {
-            bookedVtcsBody.innerHTML = bookedVtcsList.map(item => `
-                <div class="booked-vtc-item">
-                    <div class="booked-vtc-info">
-                        <img src="${item.vtcLogo}" class="booked-vtc-logo" onerror="this.src='https://i.imgur.com/86k1z0Z.png'">
-                        <div>
-                            <a href="${item.vtcLink || '#'}" target="_blank" style="color:var(--text-light); font-weight:bold; text-decoration:none;">${item.vtcName}</a>
-                            <span style="color:var(--text-dim); font-size:11px;"> (${item.drivers || '?'} Drivers)</span>
+        if (bookedVtcsBody) {
+            if (bookedVtcsList.length === 0) {
+                bookedVtcsBody.innerHTML = `<p style="font-size:12px; color:var(--text-dim); text-align:center; padding: 6px;">No VTCs have booked a slot yet.</p>`;
+            } else {
+                bookedVtcsBody.innerHTML = bookedVtcsList.map(item => `
+                    <div class="booked-vtc-item">
+                        <div class="booked-vtc-info">
+                            <img src="${item.vtcLogo}" class="booked-vtc-logo" onerror="this.src='https://i.imgur.com/86k1z0Z.png'">
+                            <div>
+                                <a href="${item.vtcLink || '#'}" target="_blank" style="color:var(--text-light); font-weight:bold; text-decoration:none;">${item.vtcName}</a>
+                                <span style="color:var(--text-dim); font-size:11px;"> (${item.drivers || '?'} Drivers)</span>
+                            </div>
+                        </div>
+                        <div style="font-weight:bold; color:var(--primary-blue); font-size:12px;">
+                            📍 ${item.slotChoice}
                         </div>
                     </div>
-                    <div style="font-weight:bold; color:var(--primary-blue); font-size:12px;">
-                        📍 ${item.slotChoice}
-                    </div>
-                </div>
-            `).join('');
+                `).join('');
+            }
         }
     } else {
-        slotBookingBtnContainer.style.display = 'none';
-        bookedVtcsCard.style.display = 'none';
+        if (slotBookingBtnContainer) slotBookingBtnContainer.style.display = 'none';
+        if (bookedVtcsCard) bookedVtcsCard.style.display = 'none';
     }
     
-    if (userName) {
+    if (userName && statusLabel) {
         statusLabel.innerHTML = `Your RSVP Status (<span style="color:var(--primary-blue);">${userName}</span>)`;
-    } else {
+    } else if (statusLabel) {
         statusLabel.innerHTML = `Your RSVP Status <span style="color:var(--warning); font-size:11px;">(⚠️ Login with Discord to RSVP)</span>`;
     }
 
-    document.getElementById('modal-title').innerText = evt.title;
+    const modalTitle = document.getElementById('modal-title');
+    if (modalTitle) modalTitle.innerText = evt.title;
     
     let imgHTML = evt.routeImage 
         ? `<div style="margin-bottom:15px; text-align:center;">
@@ -802,18 +818,21 @@ function openEventModal(eventId) {
         ? `<div style="margin-bottom: 12px; background: var(--bg-dark); padding: 10px; border-radius: 6px; font-size: 13px; color: var(--text-dim); word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap;"><strong>📝 Description:</strong><br>${formatDescription(evt.description)}</div>`
         : '';
 
-    document.getElementById('modal-body').innerHTML = `
-        ${imgHTML}
-        <p style="margin-bottom: 8px;"><strong>📅 Date & Time:</strong> ${new Date(evt.date).toLocaleString('en-GB')}</p>
-        <p style="margin-bottom: 8px;"><strong>🖥️ Server:</strong> ${evt.server}</p>
-        <p style="margin-bottom: 8px;"><strong>🗺️ Route:</strong> ${evt.route}</p>
-        ${descHTML}
-        <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:15px; font-size:13px; color:var(--text-dim);">
-            <span>✅ Attending: <strong>${evt.rsvps.attending}</strong></span>
-            <span>❓ Unsure: <strong>${evt.rsvps.unsure}</strong></span>
-            <span>❌ Unable: <strong>${evt.rsvps.declined}</strong></span>
-        </div>
-    `;
+    const modalBody = document.getElementById('modal-body');
+    if (modalBody) {
+        modalBody.innerHTML = `
+            ${imgHTML}
+            <p style="margin-bottom: 8px;"><strong>📅 Date & Time:</strong> ${new Date(evt.date).toLocaleString('en-GB')}</p>
+            <p style="margin-bottom: 8px;"><strong>🖥️ Server:</strong> ${evt.server}</p>
+            <p style="margin-bottom: 8px;"><strong>🗺️ Route:</strong> ${evt.route}</p>
+            ${descHTML}
+            <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:15px; font-size:13px; color:var(--text-dim);">
+                <span>✅ Attending: <strong>${evt.rsvps.attending}</strong></span>
+                <span>❓ Unsure: <strong>${evt.rsvps.unsure}</strong></span>
+                <span>❌ Unable: <strong>${evt.rsvps.declined}</strong></span>
+            </div>
+        `;
+    }
 
     const attendingList = [];
     const unsureList = [];
@@ -839,18 +858,23 @@ function openEventModal(eventId) {
         return list.map((v, idx) => `<span class="rsvp-user-pill">${v.vtcName} (${v.slotChoice}) <button onclick="removeBookedVtc(${idx})" title="Cancel VTC Booking">×</button></span>`).join(' ');
     };
 
-    document.getElementById('breakdown-vtcs').innerHTML = `🚛 <strong>Booked VTCs (${bookedVtcsList.length}):</strong> ${formatVtcRosterList(bookedVtcsList)}`;
-    document.getElementById('breakdown-attending').innerHTML = `✅ <strong>Attending (${attendingList.length}):</strong> ${formatRosterList(attendingList)}`;
-    document.getElementById('breakdown-unsure').innerHTML = `❓ <strong>Unsure (${unsureList.length}):</strong> ${formatRosterList(unsureList)}`;
-    document.getElementById('breakdown-declined').innerHTML = `❌ <strong>Unable (${declinedList.length}):</strong> ${formatRosterList(declinedList)}`;
+    const breakdownVtcs = document.getElementById('breakdown-vtcs');
+    const breakdownAttending = document.getElementById('breakdown-attending');
+    const breakdownUnsure = document.getElementById('breakdown-unsure');
+    const breakdownDeclined = document.getElementById('breakdown-declined');
+
+    if (breakdownVtcs) breakdownVtcs.innerHTML = `🚛 <strong>Booked VTCs (${bookedVtcsList.length}):</strong> ${formatVtcRosterList(bookedVtcsList)}`;
+    if (breakdownAttending) breakdownAttending.innerHTML = `✅ <strong>Attending (${attendingList.length}):</strong> ${formatRosterList(attendingList)}`;
+    if (breakdownUnsure) breakdownUnsure.innerHTML = `❓ <strong>Unsure (${unsureList.length}):</strong> ${formatRosterList(unsureList)}`;
+    if (breakdownDeclined) breakdownDeclined.innerHTML = `❌ <strong>Unable (${declinedList.length}):</strong> ${formatRosterList(declinedList)}`;
 
     document.querySelectorAll('.rsvp-btn').forEach(b => b.classList.remove('active'));
     
     const userRsvp = userName && evt.driverRsvps ? evt.driverRsvps[userName] : null;
     if (userRsvp) {
-        if (userRsvp === 'attending') document.getElementById('rsvp-yes').classList.add('active');
-        if (userRsvp === 'unsure') document.getElementById('rsvp-maybe').classList.add('active');
-        if (userRsvp === 'declined') document.getElementById('rsvp-no').classList.add('active');
+        if (userRsvp === 'attending') document.getElementById('rsvp-yes')?.classList.add('active');
+        if (userRsvp === 'unsure') document.getElementById('rsvp-maybe')?.classList.add('active');
+        if (userRsvp === 'declined') document.getElementById('rsvp-no')?.classList.add('active');
     }
 
     updateAuthUI();
