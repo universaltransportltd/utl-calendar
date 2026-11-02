@@ -102,6 +102,41 @@ function stopSnow() {
     }
 }
 
+/* Web Audio API Christmas Jingle Generator */
+let audioCtx = null;
+function playXmasJingle() {
+    try {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        const times = [0, 0.15, 0.3, 0.45];
+        
+        notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            
+            gain.gain.setValueAtTime(0.02, audioCtx.currentTime + times[idx]); // Very low volume (0.02)
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + times[idx] + 0.3);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start(audioCtx.currentTime + times[idx]);
+            osc.stop(audioCtx.currentTime + times[idx] + 0.3);
+        });
+    } catch (e) {
+        console.log('Audio autoplay prevented or unsupported', e);
+    }
+}
+
 const categoryColors = {
     truckfest: '#1CC8FA',
     convoy: '#3498DB',
@@ -413,7 +448,7 @@ window.renderCalendar = function() {
             let cellContent = `<span class="cell-number">${day}</span>`;
 
             if (month === 11) {
-                if (day === 25) cellContent += `<div class="holiday-badge badge-xmas">🎄 Christmas Day</div>`;
+                if (day === 25) cellContent += `<div class="holiday-badge badge-xmas" onmouseenter="playXmasJingle()">🎄 Christmas Day</div>`;
                 else if (day === 26) cellContent += `<div class="holiday-badge badge-boxing">🎁 Boxing Day</div>`;
                 else if (day === 31) cellContent += `<div class="holiday-badge badge-NYE">🎆 New Year's Eve</div>`;
             }
@@ -517,6 +552,17 @@ window.closeModal = function(modalId, keepActiveId = false) {
         sessionStorage.removeItem('utl_active_event_id');
     }
 };
+
+// Allow clicking outside the modal card overlay to close the event modal
+document.addEventListener('click', function(e) {
+    const eventModal = document.getElementById('event-modal');
+    if (eventModal && eventModal.classList.contains('active')) {
+        const card = eventModal.querySelector('.modal-card');
+        if (card && !card.contains(e.target)) {
+            closeModal('event-modal');
+        }
+    }
+});
 
 window.openLightbox = function(imgSrc) {
     const lightbox = document.getElementById('lightbox-modal');
@@ -924,7 +970,15 @@ function openEventModal(eventId) {
     const bookedVtcsBody = document.getElementById('booked-vtcs-list-body');
     const bookedVtcsCountTag = document.getElementById('booked-vtc-count-tag');
 
-    const bookedVtcsList = Array.isArray(evt.bookedVtcs) ? evt.bookedVtcs : [];
+    // Sort booked VTCs naturally by slot number
+    const bookedVtcsList = Array.isArray(evt.bookedVtcs) ? [...evt.bookedVtcs] : [];
+    bookedVtcsList.sort((a, b) => {
+        const getSlotNum = (slotStr) => {
+            const match = (slotStr || '').match(/\d+/);
+            return match ? parseInt(match[0], 10) : 9999;
+        };
+        return getSlotNum(a.slotChoice) - getSlotNum(b.slotChoice);
+    });
 
     if (evt.type === 'utl_own') {
         if (slotBookingBtnContainer) slotBookingBtnContainer.style.display = 'block';
@@ -935,7 +989,9 @@ function openEventModal(eventId) {
             if (bookedVtcsList.length === 0) {
                 bookedVtcsBody.innerHTML = `<p style="font-size:12px; color:var(--text-dim); text-align:center; padding: 6px;">No VTCs have booked a slot yet.</p>`;
             } else {
-                bookedVtcsBody.innerHTML = bookedVtcsList.map(item => `
+                bookedVtcsBody.innerHTML = bookedVtcsList.map(item => {
+                    const originalIndex = evt.bookedVtcs.indexOf(item);
+                    return `
                     <div class="booked-vtc-item">
                         <div class="booked-vtc-info">
                             <img src="${item.vtcLogo}" class="booked-vtc-logo" onerror="this.src='https://i.imgur.com/86k1z0Z.png'">
@@ -945,10 +1001,11 @@ function openEventModal(eventId) {
                             </div>
                         </div>
                         <div style="font-weight:bold; color:var(--primary-blue); font-size:12px;">
-                            📍 ${item.slotChoice}
+                            📍 ${item.slotChoice} ${isStaff ? `<button class="btn btn-danger" style="padding:1px 5px; font-size:10px; margin-left:6px;" onclick="removeBookedVtc(${originalIndex})">×</button>` : ''}
                         </div>
                     </div>
-                `).join('');
+                `;
+                }).join('');
             }
         }
     } else {
