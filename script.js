@@ -590,13 +590,20 @@ window.openSlotBookingModal = function() {
     if (slotModal) slotModal.classList.add('active');
 };
 
-// Staff Manual VTC Slot Assignment
 window.openStaffManualBookingModal = function() {
     const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
     if (!isStaff) return;
 
+    // Fallback: If activeEventId is lost in memory, grab it from sessionStorage
+    if (!activeEventId) {
+        activeEventId = sessionStorage.getItem('utl_active_event_id');
+    }
+
     const evt = events.find(e => e.id === activeEventId);
-    if (!evt) return;
+    if (!evt) {
+        alert("⚠️ Error: No active event selected. Please close and re-open the event details card.");
+        return;
+    }
 
     const generatedSlots = getGeneratedSlotsForEvent(evt);
     const bookedVtcs = Array.isArray(evt.bookedVtcs) ? evt.bookedVtcs : [];
