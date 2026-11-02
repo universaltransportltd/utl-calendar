@@ -7,6 +7,8 @@
     <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Orbitron:wght@800;900&display=swap');
+
         :root {
             --bg-dark: #0f0a1e;
             --bg-card: #1c1333;
@@ -21,6 +23,23 @@
             --danger: #e74c3c;
             --warning: #f1c40f;
             --discord-blurple: #5865F2;
+
+            /* Neon Theme variables for December clock */
+            --red-top: #ff2d3d;
+            --red-main: #d10a24;
+            --red-dark: #7e0310;
+            --green-edge: #43e038;
+            --neon-pink: #ff007f;
+            --neon-pink-glow: rgba(255, 0, 127, 0.85);
+            --neon-cyan: #00f3ff;
+            --neon-cyan-glow: rgba(0, 243, 255, 0.85);
+            --candy-stripe-pattern: repeating-linear-gradient(
+                -45deg,
+                #d10a24,
+                #d10a24 6px,
+                #ffffff 6px,
+                #ffffff 12px
+            );
         }
 
         /* December Festive Theme Overrides */
@@ -169,23 +188,20 @@
 
         main {
             flex: 1;
-            max-width: 1750px;
+            max-width: 1500px;
             width: 100%;
             margin: 0 auto;
             padding: 30px 20px;
             display: grid;
-            grid-template-columns: 320px 1fr 280px;
+            grid-template-columns: 320px 1fr;
             gap: 25px;
             position: relative;
             z-index: 2;
         }
 
-        @media (max-width: 1400px) {
+        @media (max-width: 1024px) {
             main {
-                grid-template-columns: 320px 1fr;
-            }
-            .right-margin-panel {
-                display: none; /* Fallback for smaller screens */
+                grid-template-columns: 1fr;
             }
         }
 
@@ -240,94 +256,412 @@
             gap: 3px;
         }
 
-        /* Right Margin Clock Panel Styles */
-        .right-margin-panel {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 20px;
+        /* Bottom Clock Container Layout */
+        .bottom-clock-container {
+            margin-top: 35px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
-            height: fit-content;
-            position: sticky;
-            top: 20px;
+            justify-content: center;
+            padding: 20px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            position: relative;
+            z-index: 5;
         }
 
-        .margin-clock-header {
-            font-size: 13px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--primary-blue);
-            font-weight: bold;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
+        /* ==========================================
+           STANDARD CLOCK STYLES (Non-December)
+           ========================================== */
+        .std-clock-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             width: 100%;
-            text-align: center;
         }
 
-        .margin-flip-clock {
+        .std-clock-header {
+            font-size: 15px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #00d2ff;
+            margin-bottom: 14px;
+            padding: 6px 16px;
+            background: rgba(10, 3, 26, 0.85);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 210, 255, 0.2);
+            font-weight: 900;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+            font-family: 'Arial Black', Arial, sans-serif;
+        }
+
+        .std-flip-clock {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            filter: drop-shadow(0px 10px 20px rgba(0, 0, 0, 0.95));
         }
 
-        .margin-flip-card {
+        .std-flip-card {
             position: relative;
-            width: 36px;
-            height: 52px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 32px;
+            width: 72px;
+            height: 104px;
+            font-size: 72px;
             font-weight: bold;
-            color: var(--primary-blue);
-            background-color: var(--accent-purple);
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
+            color: #00d2ff;
+            background-color: #1f0442;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(0, 0, 0, 0.6);
+            border: 2px solid #0f0224;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+            font-family: 'Arial Black', Arial, sans-serif;
         }
 
-        .margin-digit-inner {
+        .std-flip-card::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #05010a;
+            z-index: 5;
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .std-digit-inner {
             position: absolute;
             width: 100%;
             height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-in-out;
+            will-change: transform, opacity;
         }
 
-        .margin-separator {
+        .std-digit-inner.slide-out { transform: translateY(-100%); opacity: 0; }
+        .std-digit-inner.slide-in { transform: translateY(100%); opacity: 0; }
+        .std-digit-inner.active { transform: translateY(0%); opacity: 1; }
+
+        .std-separator {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            justify-content: center;
+            gap: 16px;
+            padding: 0 2px;
         }
 
-        .margin-dot {
-            width: 5px;
-            height: 5px;
-            background-color: var(--primary-blue);
-            border-radius: 50%;
-            box-shadow: 0 0 6px var(--primary-blue);
+        .std-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #00d2ff;
+            border-radius: 2px;
+            box-shadow: 0 0 8px rgba(0, 210, 255, 0.8), 2px 2px 4px rgba(0, 0, 0, 0.9);
         }
 
-        #margin-date {
-            font-size: 12px;
-            color: var(--text-light);
+        #std-date {
+            font-size: 18px;
+            margin-top: 18px;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            text-align: center;
-            font-weight: 600;
+            color: #ffffff;
+            background: rgba(10, 3, 26, 0.85);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.9);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+            font-weight: bold;
+            font-family: 'Arial Black', Arial, sans-serif;
         }
 
-        #margin-utc-display {
-            font-size: 12px;
-            color: var(--text-dim);
-            letter-spacing: 1px;
-            text-align: center;
+        #std-utc-display {
+            font-size: 15px;
+            margin-top: 12px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #00d2ff;
+            background: rgba(10, 3, 26, 0.85);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            padding: 6px 16px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 210, 255, 0.2);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+            font-weight: bold;
+            font-family: 'Arial Black', Arial, sans-serif;
+        }
+
+
+        /* ==========================================
+           DECEMBER XMAS CLOCK STYLES (Candy Cane Neon)
+           ========================================== */
+        .xmas-clock-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .xmas-neon-svg {
+            position: absolute;
+            pointer-events: none;
+            z-index: 12;
+            overflow: visible;
+        }
+
+        .xmas-neon-path-cyan {
+            stroke: var(--neon-cyan);
+            stroke-width: 4px;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            filter: drop-shadow(0 0 6px var(--neon-cyan-glow)) drop-shadow(0 0 14px var(--neon-cyan));
+        }
+
+        .xmas-neon-path-pink {
+            stroke: var(--neon-pink);
+            stroke-width: 4px;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            filter: drop-shadow(0 0 6px var(--neon-pink-glow)) drop-shadow(0 0 14px var(--neon-pink));
+        }
+
+        .xmas-header-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .xmas-header-svg {
+            top: -8px;
+            left: -12px;
+            width: calc(100% + 24px);
+            height: calc(100% + 16px);
+        }
+
+        .xmas-clock-header {
+            position: relative;
+            font-size: 15px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--white-pure, #ffffff);
+            padding: 10px 32px 10px 48px;
+            background: linear-gradient(180deg, var(--red-top) 0%, var(--red-main) 60%, var(--red-dark) 100%);
+            border-radius: 40px;
+            box-shadow: 
+                0 5px 0 0 var(--green-edge),
+                0 10px 20px rgba(0, 0, 0, 0.8),
+                inset 0 2px 2px rgba(255, 255, 255, 0.6),
+                inset 0 -3px 4px rgba(0, 0, 0, 0.5);
+            font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            z-index: 5;
+        }
+
+        .xmas-clock-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 36px;
+            height: 100%;
+            background: var(--candy-stripe-pattern);
+            border-top-left-radius: 40px;
+            border-bottom-left-radius: 40px;
+            border-right: 2px solid rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
+        }
+
+        .xmas-flip-clock {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 2;
+        }
+
+        .xmas-flip-card {
+            position: relative;
+            width: 76px;
+            height: 110px;
+            font-family: 'Orbitron', 'Montserrat', sans-serif;
+            font-size: 74px;
+            font-weight: 900;
+            color: #ffffff;
+            border-radius: 20px;
+            background: linear-gradient(180deg, var(--red-top) 0%, var(--red-main) 60%, var(--red-dark) 100%);
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 6px 0 0 var(--green-edge),
+                0 12px 25px rgba(0, 0, 0, 0.85),
+                inset 0 3px 3px rgba(255, 255, 255, 0.6),
+                inset 0 -4px 6px rgba(0, 0, 0, 0.6);
+            overflow: hidden !important;
+            clip-path: inset(0 0 0 0 round 20px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #xmas-h1 .xmas-stripe-cap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 24px;
+            height: 100%;
+            background: var(--candy-stripe-pattern);
+            border-top-left-radius: 20px;
+            border-bottom-left-radius: 20px;
+            border-right: 2px solid rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.6);
+            z-index: 1;
+        }
+
+        #xmas-s2 .xmas-stripe-cap {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 24px;
+            height: 100%;
+            background: var(--candy-stripe-pattern);
+            border-top-right-radius: 20px;
+            border-bottom-right-radius: 20px;
+            border-left: 2px solid rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.6);
+            z-index: 1;
+        }
+
+        .xmas-flip-card::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: rgba(0, 0, 0, 0.65);
+            z-index: 6;
+            box-shadow: 0 1px 1px rgba(255, 255, 255, 0.35);
+            transform: translateY(-50%);
+        }
+
+        .xmas-digit-inner {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-in-out;
+            will-change: transform, opacity;
+            color: #ffffff !important;
+            text-shadow: 0 0 3px #000000, 0 2px 6px #000000, 0 4px 10px rgba(0, 0, 0, 0.9);
+            z-index: 3;
+        }
+
+        .xmas-digit-inner.slide-out { transform: translateY(-100%); opacity: 0; }
+        .xmas-digit-inner.slide-in { transform: translateY(100%); opacity: 0; }
+        .xmas-digit-inner.active { transform: translateY(0%); opacity: 1; }
+
+        .xmas-separator {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 16px;
+            padding: 0 2px;
+            z-index: 5;
+        }
+
+        .xmas-dot {
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle at 35% 35%, #ffffff, #d10a24 70%);
+            border: 1px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--neon-cyan), 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .xmas-date-wrapper {
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .xmas-date-svg {
+            top: -8px;
+            left: -12px;
+            width: calc(100% + 24px);
+            height: calc(100% + 16px);
+        }
+
+        #xmas-date {
+            position: relative;
+            font-size: 15px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #ffffff;
+            background: linear-gradient(180deg, #188a52 0%, #10633a 60%, #083c22 100%);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 10px 48px 10px 32px;
+            border-radius: 40px;
+            box-shadow: 0 5px 0 0 var(--red-main), 0 10px 22px rgba(0, 0, 0, 0.85), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -3px 4px rgba(0, 0, 0, 0.5);
+            font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+            z-index: 5;
+        }
+
+        #xmas-date::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 36px;
+            height: 100%;
+            background: var(--candy-stripe-pattern);
+            border-top-right-radius: 40px;
+            border-bottom-right-radius: 40px;
+            border-left: 2px solid rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
+        }
+
+        #xmas-countdown-banner {
+            position: relative;
+            font-size: 15px;
+            margin-top: 18px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #ffffff;
+            background: linear-gradient(180deg, var(--red-top) 0%, var(--red-main) 60%, var(--red-dark) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 10px 32px 10px 48px;
+            border-radius: 40px;
+            box-shadow: 0 5px 0 0 var(--green-edge), 0 10px 22px rgba(0, 0, 0, 0.85), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -3px 4px rgba(0, 0, 0, 0.5);
+            font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+            z-index: 5;
+        }
+
+        #xmas-countdown-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 36px;
+            height: 100%;
+            background: var(--candy-stripe-pattern);
+            border-top-left-radius: 40px;
+            border-bottom-left-radius: 40px;
+            border-right: 2px solid rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
         }
 
         .calendar-section {
@@ -767,62 +1101,88 @@
             </div>
             <div class="calendar-grid" id="calendar-days-grid" style="margin-top: 10px;"></div>
 
-            <!-- December Christmas Countdown Banner (Appears only in December) -->
-            <div id="calendar-xmas-banner" style="display: none; margin-top: 25px; text-align: center; z-index: 5; position: relative;">
-                <div style="
-                    display: inline-block;
-                    position: relative;
-                    font-size: 14px;
-                    letter-spacing: 3px;
-                    text-transform: uppercase;
-                    color: #ffffff;
-                    background: linear-gradient(180deg, #ff2d3d 0%, #d10a24 60%, #7e0310 100%);
-                    border: 1px solid rgba(255, 255, 255, 0.25);
-                    padding: 10px 32px 10px 48px;
-                    border-radius: 40px;
-                    box-shadow: 0 5px 0 0 #43e038, 0 10px 22px rgba(0, 0, 0, 0.85), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -3px 4px rgba(0, 0, 0, 0.5);
-                    font-weight: 900;
-                    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
-                ">
-                    <span style="
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 36px;
-                        height: 100%;
-                        background: repeating-linear-gradient(-45deg, #d10a24, #d10a24 8px, #ffffff 8px, #ffffff 16px);
-                        border-top-left-radius: 40px;
-                        border-bottom-left-radius: 40px;
-                        border-right: 2px solid rgba(0, 0, 0, 0.4);
-                        box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
-                    "></span>
-                    <span id="calendar-xmas-countdown">LOADING COUNTDOWN...</span>
+            <!-- Bottom Clock Container (Swaps between Standard Clock and Christmas Neon Clock based on December) -->
+            <div class="bottom-clock-container">
+                
+                <!-- 1. Standard Clock (Shown Jan - Nov) -->
+                <div id="std-clock-view" class="std-clock-wrapper">
+                    <div class="std-clock-header">Current UK</div>
+                    <div class="std-flip-clock">
+                        <div class="std-flip-card" id="h1"><div class="std-digit-inner active">0</div></div>
+                        <div class="std-flip-card" id="h2"><div class="std-digit-inner active">0</div></div>
+                        <div class="std-separator">
+                            <div class="std-dot"></div>
+                            <div class="std-dot"></div>
+                        </div>
+                        <div class="std-flip-card" id="m1"><div class="std-digit-inner active">0</div></div>
+                        <div class="std-flip-card" id="m2"><div class="std-digit-inner active">0</div></div>
+                        <div class="std-separator">
+                            <div class="std-dot"></div>
+                            <div class="std-dot"></div>
+                        </div>
+                        <div class="std-flip-card" id="s1"><div class="std-digit-inner active">0</div></div>
+                        <div class="std-flip-card" id="s2"><div class="std-digit-inner active">0</div></div>
+                    </div>
+                    <div id="std-date">LOADING DATE...</div>
+                    <div id="std-utc-display">LOADING UTC...</div>
                 </div>
+
+                <!-- 2. December Christmas Neon Clock (Shown only in December) -->
+                <div id="xmas-clock-view" class="xmas-clock-wrapper" style="display: none;">
+                    <div class="xmas-header-wrapper">
+                        <svg class="xmas-neon-svg xmas-header-svg" viewBox="0 0 260 60" preserveAspectRatio="none">
+                            <path class="xmas-neon-path-pink" d="M -5,12 C 30,-5 80,65 140,50 C 200,35 240,65 265,48" />
+                            <path class="xmas-neon-path-cyan" d="M -5,48 C 25,65 70,-5 130,10 C 190,25 235,-5 265,12" />
+                        </svg>
+                        <div class="xmas-clock-header">Current UK Time</div>
+                    </div>
+
+                    <div class="xmas-flip-clock">
+                        <div class="xmas-flip-card" id="xmas-h1">
+                            <div class="xmas-stripe-cap"></div>
+                            <div class="xmas-digit-inner active">0</div>
+                        </div>
+                        <div class="xmas-flip-card" id="xmas-h2">
+                            <div class="xmas-digit-inner active">0</div>
+                        </div>
+                        <div class="xmas-separator">
+                            <div class="xmas-dot"></div>
+                            <div class="xmas-dot"></div>
+                        </div>
+                        <div class="xmas-flip-card" id="xmas-m1">
+                            <div class="xmas-digit-inner active">0</div>
+                        </div>
+                        <div class="xmas-flip-card" id="xmas-m2">
+                            <div class="xmas-digit-inner active">0</div>
+                        </div>
+                        <div class="xmas-separator">
+                            <div class="xmas-dot"></div>
+                            <div class="xmas-dot"></div>
+                        </div>
+                        <div class="xmas-flip-card" id="xmas-s1">
+                            <div class="xmas-digit-inner active">0</div>
+                        </div>
+                        <div class="xmas-flip-card" id="xmas-s2">
+                            <div class="xmas-stripe-cap"></div>
+                            <div class="xmas-digit-inner active">0</div>
+                        </div>
+                    </div>
+
+                    <div class="xmas-date-wrapper">
+                        <svg class="xmas-neon-svg xmas-date-svg" viewBox="0 0 320 60" preserveAspectRatio="none">
+                            <path class="xmas-neon-path-pink" d="M -5,50 C 30,65 90,-5 160,10 C 230,25 285,-5 325,15" />
+                            <path class="xmas-neon-path-cyan" d="M -5,10 C 35,-5 85,65 155,50 C 225,35 280,65 325,45" />
+                        </svg>
+                        <div id="xmas-date">LOADING UK DATE...</div>
+                    </div>
+
+                    <div id="xmas-countdown-banner">
+                        <span id="xmas-countdown">LOADING COUNTDOWN...</span>
+                    </div>
+                </div>
+
             </div>
         </div>
-
-        <!-- Right Margin Panel: Floating Live Clock Area (Matching your right green box) -->
-        <aside class="right-margin-panel">
-            <div class="margin-clock-header">Current UK Time</div>
-            <div class="margin-flip-clock">
-                <div class="margin-flip-card" id="mc-h1"><div class="margin-digit-inner">0</div></div>
-                <div class="margin-flip-card" id="mc-h2"><div class="margin-digit-inner">0</div></div>
-                <div class="margin-separator">
-                    <div class="margin-dot"></div>
-                    <div class="margin-dot"></div>
-                </div>
-                <div class="margin-flip-card" id="mc-m1"><div class="margin-digit-inner">0</div></div>
-                <div class="margin-flip-card" id="mc-m2"><div class="margin-digit-inner">0</div></div>
-                <div class="margin-separator">
-                    <div class="margin-dot"></div>
-                    <div class="margin-dot"></div>
-                </div>
-                <div class="margin-flip-card" id="mc-s1"><div class="margin-digit-inner">0</div></div>
-                <div class="margin-flip-card" id="mc-s2"><div class="margin-digit-inner">0</div></div>
-            </div>
-            <div id="margin-date">LOADING DATE...</div>
-            <div id="margin-utc-display">LOADING UTC...</div>
-        </aside>
     </main>
 
     <!-- Event Details Modal -->
@@ -1030,53 +1390,113 @@
     <!-- External Script Integration -->
     <script src="script.js"></script>
     <script>
-        // Margin Clock & Christmas Countdown Ticker Script
-        function updateMarginClockAndCountdown() {
+        // Dual-Clock Animation & State Manager
+        const previousStdValues = {};
+        const previousXmasValues = {};
+
+        function setStdDigit(cardId, newVal) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            const oldVal = previousStdValues[cardId];
+
+            if (oldVal === undefined) {
+                card.querySelector('.std-digit-inner').textContent = newVal;
+                previousStdValues[cardId] = newVal;
+                return;
+            }
+
+            if (oldVal !== newVal) {
+                const currentInner = card.querySelector('.std-digit-inner.active');
+                if (currentInner) {
+                    currentInner.classList.remove('active');
+                    currentInner.classList.add('slide-out');
+                }
+
+                const incomingInner = document.createElement('div');
+                incomingInner.className = 'std-digit-inner slide-in';
+                incomingInner.textContent = newVal;
+                card.appendChild(incomingInner);
+
+                void incomingInner.offsetWidth;
+
+                incomingInner.classList.remove('slide-in');
+                incomingInner.classList.add('active');
+
+                setTimeout(() => {
+                    const oldElements = card.querySelectorAll('.slide-out');
+                    oldElements.forEach(el => el.remove());
+                }, 300);
+
+                previousStdValues[cardId] = newVal;
+            }
+        }
+
+        function setXmasDigit(cardId, newVal) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            const oldVal = previousXmasValues[cardId];
+
+            if (oldVal === undefined) {
+                const initialInner = card.querySelector('.xmas-digit-inner');
+                if (initialInner) initialInner.textContent = newVal;
+                previousXmasValues[cardId] = newVal;
+                return;
+            }
+
+            if (oldVal !== newVal) {
+                const currentInner = card.querySelector('.xmas-digit-inner.active');
+                if (currentInner) {
+                    currentInner.classList.remove('active');
+                    currentInner.classList.add('slide-out');
+                }
+
+                const incomingInner = document.createElement('div');
+                incomingInner.className = 'xmas-digit-inner slide-in';
+                incomingInner.textContent = newVal;
+                card.appendChild(incomingInner);
+
+                void incomingInner.offsetWidth;
+
+                incomingInner.classList.remove('slide-in');
+                incomingInner.classList.add('active');
+
+                setTimeout(() => {
+                    const oldElements = card.querySelectorAll('.slide-out');
+                    oldElements.forEach(el => el.remove());
+                }, 300);
+
+                previousXmasValues[cardId] = newVal;
+            }
+        }
+
+        function updateBottomClocks() {
             const now = new Date();
+            const isDec = document.body.classList.contains('theme-december');
 
-            // UK Time format for margin clock
-            const ukTimeString = now.toLocaleTimeString('en-GB', { 
-                timeZone: 'Europe/London', 
-                hour12: false, 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit' 
-            });
+            const stdClockView = document.getElementById('std-clock-view');
+            const xmasClockView = document.getElementById('xmas-clock-view');
 
-            const hours = ukTimeString.slice(0, 2);
-            const minutes = ukTimeString.slice(3, 5);
-            const seconds = ukTimeString.slice(6, 8);
+            if (isDec) {
+                if (stdClockView) stdClockView.style.display = 'none';
+                if (xmasClockView) xmasClockView.style.display = 'flex';
 
-            const setMcDigit = (id, val) => {
-                const el = document.getElementById(id);
-                if (el && el.textContent !== val) el.textContent = val;
-            };
+                // Christmas Clock Logic
+                const ukTimeString = now.toLocaleTimeString('en-GB', { 
+                    timeZone: 'Europe/London', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' 
+                });
+                setXmasDigit('xmas-h1', ukTimeString.slice(0, 1));
+                setXmasDigit('xmas-h2', ukTimeString.slice(1, 2));
+                setXmasDigit('xmas-m1', ukTimeString.slice(3, 4));
+                setXmasDigit('xmas-m2', ukTimeString.slice(4, 5));
+                setXmasDigit('xmas-s1', ukTimeString.slice(6, 7));
+                setXmasDigit('xmas-s2', ukTimeString.slice(7, 8));
 
-            setMcDigit('mc-h1', hours[0]);
-            setMcDigit('mc-h2', hours[1]);
-            setMcDigit('mc-m1', minutes[0]);
-            setMcDigit('mc-m2', minutes[1]);
-            setMcDigit('mc-s1', seconds[0]);
-            setMcDigit('mc-s2', seconds[1]);
+                const dateString = now.toLocaleDateString('en-GB', { 
+                    timeZone: 'Europe/London', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+                });
+                const xmasDateElem = document.getElementById('xmas-date');
+                if (xmasDateElem) xmasDateElem.textContent = dateString;
 
-            const dateString = now.toLocaleDateString('en-GB', { 
-                timeZone: 'Europe/London', 
-                weekday: 'short', 
-                day: 'numeric', 
-                month: 'short', 
-                year: 'numeric' 
-            });
-            const mcDate = document.getElementById('margin-date');
-            if (mcDate) mcDate.textContent = dateString;
-
-            const utcDateString = now.toLocaleDateString('en-GB', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: '2-digit' });
-            const utcTimeString = now.toLocaleTimeString('en-GB', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const mcUtc = document.getElementById('margin-utc-display');
-            if (mcUtc) mcUtc.textContent = `${utcDateString} - ${utcTimeString} UTC`;
-
-            // December Countdown calculation
-            const xmasBanner = document.getElementById('calendar-xmas-banner');
-            if (xmasBanner && xmasBanner.style.display !== 'none') {
                 const ukNowString = now.toLocaleString('en-US', { timeZone: 'Europe/London' });
                 const ukNow = new Date(ukNowString);
                 let xmasYear = ukNow.getFullYear();
@@ -1086,23 +1506,49 @@
                     xmasDate = new Date(xmasYear, 11, 25);
                 }
                 const diffTime = xmasDate - ukNow;
-                const countdownElem = document.getElementById('calendar-xmas-countdown');
+                const countdownElem = document.getElementById('xmas-countdown');
                 if (countdownElem) {
                     if (ukNow.getMonth() === 11 && ukNow.getDate() === 25) {
                         countdownElem.textContent = "🎅 MERRY CHRISTMAS! 🎄";
                     } else {
                         const totalMinutes = Math.floor(diffTime / (1000 * 60));
                         const days = Math.floor(totalMinutes / (60 * 24));
-                        const hoursRem = Math.floor((totalMinutes % (60 * 24)) / 60);
-                        const minutesRem = totalMinutes % 60;
-                        countdownElem.textContent = `🎅 ${days}D ${hoursRem}H ${minutesRem}M TILL CHRISTMAS 🎄`;
+                        const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+                        const minutes = totalMinutes % 60;
+                        countdownElem.textContent = `🎅 ${days}D ${hours}H ${minutes}M TILL CHRISTMAS 🎄`;
                     }
                 }
+
+            } else {
+                if (xmasClockView) xmasClockView.style.display = 'none';
+                if (stdClockView) stdClockView.style.display = 'flex';
+
+                // Standard Clock Logic
+                const ukTimeString = now.toLocaleTimeString('en-GB', { 
+                    timeZone: 'Europe/London', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' 
+                });
+                setStdDigit('h1', ukTimeString.slice(0, 1));
+                setStdDigit('h2', ukTimeString.slice(1, 2));
+                setStdDigit('m1', ukTimeString.slice(3, 4));
+                setStdDigit('m2', ukTimeString.slice(4, 5));
+                setStdDigit('s1', ukTimeString.slice(6, 7));
+                setStdDigit('s2', ukTimeString.slice(7, 8));
+
+                const dateString = now.toLocaleDateString('en-GB', { 
+                    timeZone: 'Europe/London', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+                });
+                const stdDateElem = document.getElementById('std-date');
+                if (stdDateElem) stdDateElem.textContent = dateString;
+
+                const utcDateString = now.toLocaleDateString('en-GB', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: '2-digit' });
+                const utcTimeString = now.toLocaleTimeString('en-GB', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const stdUtcElem = document.getElementById('std-utc-display');
+                if (stdUtcElem) stdUtcElem.textContent = `${utcDateString} - ${utcTimeString} UTC`;
             }
         }
 
-        setInterval(updateMarginClockAndCountdown, 1000);
-        updateMarginClockAndCountdown();
+        setInterval(updateBottomClocks, 1000);
+        updateBottomClocks();
     </script>
 </body>
 </html>
