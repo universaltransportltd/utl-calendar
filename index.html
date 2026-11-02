@@ -463,12 +463,49 @@
             margin-bottom: 8px;
         }
 
-        .slot-input-row input:nth-child(1) {
-            flex: 1;
+        .slot-input-row input:nth-child(1) { flex: 1; }
+        .slot-input-row input:nth-child(2) { flex: 2; }
+
+        .booked-vtc-list-card {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
         }
 
-        .slot-input-row input:nth-child(2) {
-            flex: 2;
+        .booked-vtc-list-card h4 {
+            font-size: 14px;
+            color: var(--primary-blue);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .booked-vtc-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .booked-vtc-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .booked-vtc-logo {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            object-fit: cover;
         }
 
         .rsvp-container {
@@ -625,6 +662,12 @@
                 <button class="close-btn" onclick="closeModal('event-modal')">×</button>
             </div>
             <div id="modal-body"></div>
+
+            <!-- Public Booked VTC List Section (Visible before booking button) -->
+            <div id="utl-booked-vtcs-container" class="booked-vtc-list-card" style="display: none;">
+                <h4>🚛 Registered & Booked VTC Slots <span id="booked-vtc-count-tag" style="font-size: 12px; color: var(--text-dim);">(0)</span></h4>
+                <div id="booked-vtcs-list-body" style="max-height: 180px; overflow-y: auto;"></div>
+            </div>
             
             <div style="margin-top: 25px;" id="slot-booking-action-wrapper">
                 <div id="utl-slot-booking-btn-container" style="margin-bottom: 15px; display: none;">
@@ -642,7 +685,8 @@
 
                 <!-- Staff Detailed Name Breakdown & Editor -->
                 <div id="staff-rsvp-breakdown-box" class="staff-rsvp-breakdown" style="display: none;">
-                    <h4>👥 Staff RSVP Roster View & Edit</h4>
+                    <h4>👥 Staff Roster View & Booking Management</h4>
+                    <div class="staff-rsvp-category" id="breakdown-vtcs">🚛 <strong>Booked VTCs:</strong> None</div>
                     <div class="staff-rsvp-category" id="breakdown-attending">✅ <strong>Attending:</strong> None</div>
                     <div class="staff-rsvp-category" id="breakdown-unsure">❓ <strong>Unsure:</strong> None</div>
                     <div class="staff-rsvp-category" id="breakdown-declined">❌ <strong>Unable:</strong> None</div>
@@ -679,7 +723,7 @@
                     </div>
                     <div class="form-group">
                         <label>VTC Logo Image URL *</label>
-                        <input type="url" id="slot-vtc-logo" required placeholder="https://imghippo.com/i/logo.png">
+                        <input type="url" id="slot-vtc-logo" required placeholder="https://i.imgur.com/logo.png">
                     </div>
                     <div class="form-group">
                         <label>VTC HaulMP Page Link *</label>
@@ -755,20 +799,12 @@
                 </div>
                 <div class="form-group">
                     <label>Route Map Image URL</label>
-                    <input type="url" id="evt-img-url" placeholder="https://imghippo.com/i/..." required>
+                    <input type="url" id="evt-img-url" placeholder="https://i.imgur.com/..." required>
                 </div>
-
                 <div class="form-group">
-                    <label>Slot Booking Maps (Name + Imghippo Image URL)</label>
-                    <div id="slot-map-inputs-container">
-                        <div class="slot-input-row">
-                            <input type="text" class="slot-map-name-input" placeholder="e.g. F7 - Slots 1-4">
-                            <input type="url" class="slot-map-url-input" placeholder="https://imghippo.com/i/slotmap1.jpg">
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-secondary" style="margin-top: 5px; font-size: 11px; padding: 6px 12px;" onclick="addSlotMapInputField()">+ Add Another Slot Map</button>
+                    <label>Slot Booking Map Image URLs (Comma separated if multiple maps like F7 & Nordic Crown)</label>
+                    <textarea id="evt-slot-images" rows="2" placeholder="https://i.imgur.com/map1.jpg, https://i.imgur.com/map2.jpg"></textarea>
                 </div>
-
                 <button type="submit" class="btn" id="form-submit-btn" style="width: 100%; margin-top: 10px;">Publish Event</button>
             </form>
         </div>
@@ -963,18 +999,6 @@
             }
         }
 
-        window.addSlotMapInputField = function(name = '', url = '') {
-            const container = document.getElementById('slot-map-inputs-container');
-            const row = document.createElement('div');
-            row.className = 'slot-input-row';
-            row.innerHTML = `
-                <input type="text" class="slot-map-name-input" placeholder="e.g. F7 - Slots 1-4" value="${name}">
-                <input type="url" class="slot-map-url-input" placeholder="https://imghippo.com/i/slotmap.jpg" value="${url}">
-                <button type="button" class="btn btn-danger" style="padding: 6px 10px;" onclick="this.parentElement.remove()">×</button>
-            `;
-            container.appendChild(row);
-        };
-
         window.openManagementModal = function() {
             const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
             
@@ -985,9 +1009,6 @@
 
             document.getElementById('event-form').reset();
             document.getElementById('edit-event-id').value = '';
-            document.getElementById('slot-map-inputs-container').innerHTML = '';
-            addSlotMapInputField('', '');
-
             document.getElementById('management-modal-title').innerText = '⚙️ Events Team Control Panel (Publish)';
             document.getElementById('form-submit-btn').innerText = 'Publish Event';
 
@@ -1013,14 +1034,7 @@
             document.getElementById('evt-route').value = evt.route || '';
             document.getElementById('evt-desc').value = evt.description || '';
             document.getElementById('evt-img-url').value = evt.routeImage || '';
-
-            const container = document.getElementById('slot-map-inputs-container');
-            container.innerHTML = '';
-            if (evt.slotImages && evt.slotImages.length > 0) {
-                evt.slotImages.forEach(item => addSlotMapInputField(item.name, item.url));
-            } else {
-                addSlotMapInputField('', '');
-            }
+            document.getElementById('evt-slot-images').value = evt.slotImages ? evt.slotImages.join(', ') : '';
 
             document.getElementById('management-modal-title').innerText = '✏️ Edit Event: ' + evt.title;
             document.getElementById('form-submit-btn').innerText = 'Save Changes';
@@ -1061,6 +1075,7 @@
                         description: e.description || '',
                         routeImage: e.route_image || '',
                         slotImages: e.slot_images || [],
+                        bookedVtcs: e.booked_vtcs || [],
                         rsvps: e.rsvps || { attending: 0, unsure: 0, declined: 0 },
                         driverRsvps: e.driver_rsvps || {}
                     }));
@@ -1231,13 +1246,12 @@
             container.innerHTML = '';
 
             if (evt.slotImages && evt.slotImages.length > 0) {
-                evt.slotImages.forEach((item, index) => {
-                    const mapName = item.name ? item.name : `Slot Option / Area Map #${index + 1}`;
+                evt.slotImages.forEach((imgUrl, index) => {
                     const mapDiv = document.createElement('div');
                     mapDiv.style.marginBottom = '15px';
                     mapDiv.innerHTML = `
-                        <p style="font-size: 13px; font-weight: bold; color: var(--primary-blue);">📍 ${mapName}</p>
-                        <img src="${item.url.trim()}" style="max-width:100%; max-height:220px; border-radius:6px; border:1px solid var(--primary-blue); cursor:pointer;" onclick="openLightbox('${item.url.trim()}')" title="Click to enlarge slot map">
+                        <p style="font-size: 13px; font-weight: bold; color: var(--primary-blue);">📍 Slot Option / Area Map #${index + 1}</p>
+                        <img src="${imgUrl.trim()}" style="max-width:100%; max-height:220px; border-radius:6px; border:1px solid var(--primary-blue); cursor:pointer;" onclick="openLightbox('${imgUrl.trim()}')" title="Click to enlarge slot map">
                     `;
                     container.appendChild(mapDiv);
                 });
@@ -1255,17 +1269,37 @@
             const evt = events.find(e => e.id === activeEventId);
             if (!evt) return;
 
-            const vtcName = document.getElementById('slot-vtc-name').value;
-            const vtcLogo = document.getElementById('slot-vtc-logo').value;
-            const vtcLink = document.getElementById('slot-vtc-link').value;
-            const slotChoice = document.getElementById('slot-vtc-choice').value;
-            const drivers = document.getElementById('slot-vtc-drivers').value;
-            const discordUser = document.getElementById('slot-vtc-discord').value;
-            const position = document.getElementById('slot-vtc-position').value;
+            const vtcName = document.getElementById('slot-vtc-name').value.trim();
+            const vtcLogo = document.getElementById('slot-vtc-logo').value.trim();
+            const vtcLink = document.getElementById('slot-vtc-link').value.trim();
+            const slotChoice = document.getElementById('slot-vtc-choice').value.trim();
+            const drivers = document.getElementById('slot-vtc-drivers').value.trim();
+            const discordUser = document.getElementById('slot-vtc-discord').value.trim();
+            const position = document.getElementById('slot-vtc-position').value.trim();
+
+            const newBooking = {
+                vtcName: vtcName,
+                vtcLogo: vtcLogo,
+                vtcLink: vtcLink,
+                slotChoice: slotChoice,
+                drivers: drivers,
+                discordUser: discordUser,
+                position: position,
+                bookedAt: new Date().toISOString()
+            };
+
+            const updatedBookedVtcs = evt.bookedVtcs ? [...evt.bookedVtcs, newBooking] : [newBooking];
+
+            if (dbClient) {
+                await dbClient
+                    .from('utl_events')
+                    .update({ booked_vtcs: updatedBookedVtcs })
+                    .eq('id', evt.id);
+            }
 
             const payload = {
                 username: "UTL Convoy Slot Booking Bot",
-                avatar_url: "https://imghippo.com/i/avatar.png",
+                avatar_url: "https://i.imgur.com/86k1z0Z.png",
                 embeds: [
                     {
                         title: "🎟️ New VTC Convoy Slot Booking!",
@@ -1286,23 +1320,41 @@
             };
 
             try {
-                const res = await fetch(DISCORD_WEBHOOK_URL, {
+                await fetch(DISCORD_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-
-                if (res.ok || res.status === 204) {
-                    alert('🎉 Success! Your slot booking has been submitted and sent to the UTL Events team.');
-                    closeModal('slot-booking-modal');
-                } else {
-                    alert('⚠️ Booking submitted, but webhook notification encountered an issue.');
-                }
             } catch (err) {
                 console.error('Webhook error:', err);
-                alert('🎉 Slot booking details recorded successfully!');
-                closeModal('slot-booking-modal');
             }
+
+            alert('🎉 Success! Your slot booking has been submitted and confirmed.');
+            closeModal('slot-booking-modal');
+            await fetchEvents();
+            openEventModal(evt.id);
+        };
+
+        window.removeBookedVtc = async function(indexToRemove) {
+            const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
+            if (!isStaff) return;
+
+            const evt = events.find(e => e.id === activeEventId);
+            if (!evt || !evt.bookedVtcs) return;
+
+            if (!confirm(`Are you sure you want to cancel the booking for "${evt.bookedVtcs[indexToRemove].vtcName}"?`)) return;
+
+            evt.bookedVtcs.splice(indexToRemove, 1);
+
+            if (dbClient) {
+                await dbClient
+                    .from('utl_events')
+                    .update({ booked_vtcs: evt.bookedVtcs })
+                    .eq('id', evt.id);
+            }
+
+            openEventModal(activeEventId);
+            renderCalendar();
         };
 
         window.triggerDiscordReminder = function() {
@@ -1330,14 +1382,8 @@
 
             const editId = document.getElementById('edit-event-id').value;
             const imageUrl = document.getElementById('evt-img-url').value.trim();
-            
-            const rows = document.querySelectorAll('.slot-input-row');
-            const slotImages = Array.from(rows).map(row => {
-                const nameInp = row.querySelector('.slot-map-name-input').value.trim();
-                const urlInp = row.querySelector('.slot-map-url-input').value.trim();
-                if (!urlInp) return null;
-                return { name: nameInp || 'Slot Area Map', url: urlInp };
-            }).filter(Boolean);
+            const slotImagesRaw = document.getElementById('evt-slot-images').value.trim();
+            const slotImages = slotImagesRaw ? slotImagesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
 
             const title = document.getElementById('evt-title').value;
             const type = document.getElementById('evt-type').value;
@@ -1377,6 +1423,7 @@
                         description: desc,
                         route_image: imageUrl,
                         slot_images: slotImages,
+                        booked_vtcs: [],
                         rsvps: { attending: 0, unsure: 0, declined: 0 },
                         driver_rsvps: {}
                     });
@@ -1475,11 +1522,38 @@
             const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
             const statusLabel = document.getElementById('rsvp-status-label');
             const slotBookingBtnContainer = document.getElementById('utl-slot-booking-btn-container');
+            const bookedVtcsCard = document.getElementById('utl-booked-vtcs-container');
+            const bookedVtcsBody = document.getElementById('booked-vtcs-list-body');
+            const bookedVtcsCountTag = document.getElementById('booked-vtc-count-tag');
+
+            const bookedVtcsList = evt.bookedVtcs || [];
 
             if (evt.type === 'utl_own') {
                 slotBookingBtnContainer.style.display = 'block';
+                bookedVtcsCard.style.display = 'block';
+                bookedVtcsCountTag.innerText = `(${bookedVtcsList.length})`;
+
+                if (bookedVtcsList.length === 0) {
+                    bookedVtcsBody.innerHTML = `<p style="font-size:12px; color:var(--text-dim); text-align:center; padding: 6px;">No VTCs have booked a slot yet.</p>`;
+                } else {
+                    bookedVtcsBody.innerHTML = bookedVtcsList.map(item => `
+                        <div class="booked-vtc-item">
+                            <div class="booked-vtc-info">
+                                <img src="${item.vtcLogo}" class="booked-vtc-logo" onerror="this.src='https://i.imgur.com/86k1z0Z.png'">
+                                <div>
+                                    <a href="${item.vtcLink || '#'}" target="_blank" style="color:var(--text-light); font-weight:bold; text-decoration:none;">${item.vtcName}</a>
+                                    <span style="color:var(--text-dim); font-size:11px;"> (${item.drivers || '?'} Drivers)</span>
+                                </div>
+                            </div>
+                            <div style="font-weight:bold; color:var(--primary-blue); font-size:12px;">
+                                📍 ${item.slotChoice}
+                            </div>
+                        </div>
+                    `).join('');
+                }
             } else {
                 slotBookingBtnContainer.style.display = 'none';
+                bookedVtcsCard.style.display = 'none';
             }
             
             if (userName) {
@@ -1507,7 +1581,7 @@
                 <p style="margin-bottom: 8px;"><strong>🖥️ Server:</strong> ${evt.server}</p>
                 <p style="margin-bottom: 8px;"><strong>🗺️ Route:</strong> ${evt.route}</p>
                 ${descHTML}
-                <div style="display:flex; gap:15px; margin-top:15px; font-size:13px; color:var(--text-dim);">
+                <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:15px; font-size:13px; color:var(--text-dim);">
                     <span>✅ Attending: <strong>${evt.rsvps.attending}</strong></span>
                     <span>❓ Unsure: <strong>${evt.rsvps.unsure}</strong></span>
                     <span>❌ Unable: <strong>${evt.rsvps.declined}</strong></span>
@@ -1532,6 +1606,13 @@
                 return list.map(name => `<span class="rsvp-user-pill">${name} <button onclick="removeRsvpUser('${name.replace(/'/g, "\\'")}')" title="Remove RSVP">×</button></span>`).join(' ');
             };
 
+            const formatVtcRosterList = (list) => {
+                if (list.length === 0) return 'None';
+                if (!isStaff) return list.map(v => v.vtcName).join(', ');
+                return list.map((v, idx) => `<span class="rsvp-user-pill">${v.vtcName} (${v.slotChoice}) <button onclick="removeBookedVtc(${idx})" title="Cancel VTC Booking">×</button></span>`).join(' ');
+            };
+
+            document.getElementById('breakdown-vtcs').innerHTML = `🚛 <strong>Booked VTCs (${bookedVtcsList.length}):</strong> ${formatVtcRosterList(bookedVtcsList)}`;
             document.getElementById('breakdown-attending').innerHTML = `✅ <strong>Attending (${attendingList.length}):</strong> ${formatRosterList(attendingList)}`;
             document.getElementById('breakdown-unsure').innerHTML = `❓ <strong>Unsure (${unsureList.length}):</strong> ${formatRosterList(unsureList)}`;
             document.getElementById('breakdown-declined').innerHTML = `❌ <strong>Unable (${declinedList.length}):</strong> ${formatRosterList(declinedList)}`;
