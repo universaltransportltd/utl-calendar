@@ -841,34 +841,38 @@ window.deleteCurrentEvent = async function() {
 function formatDescription(text) {
     if (!text) return '';
     
-    // 1. HTML escape first to prevent XSS
-    let escaped = text
+    // First, convert markdown links [Text](URL) before escaping so multi-line URLs don't break
+    let processed = text.replace(/\[([^\]]+)\]\s*\(\s*([^\s)]+)\s*\)/g, function(match, textContent, url) {
+        const cleanUrl = url.trim();
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${textContent}</a>`;
+    });
+
+    // HTML escape remaining text
+    let escaped = processed
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
-    // 2. Convert markdown links [Text](URL) safely
-    escaped = escaped.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(match, textContent, url) {
-        const cleanUrl = url.replace(/&amp;/g, '&').trim();
-        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${textContent}</a>`;
-    });
+    // Restore our anchor tags that were temporarily protected from escaping
+    escaped = escaped.replace(/&lt;a href="([^"]+)" target="([^"]+)" rel="([^"]+)" style="([^"]+)"&gt;([^&]+)&lt;\/a&gt;/g, 
+        '<a href="$1" target="$2" rel="$3" style="$4">$5</a>');
 
-    // 3. Convert standalone raw URLs into clickable links (only if not already inside an <a> tag)
+    // Convert standalone raw URLs into clickable links
     escaped = escaped.replace(/(https?:\/\/[^\s<"]+)/g, function(url) {
         if (url.includes('href=')) return url;
         const cleanUrl = url.replace(/&quot;|["']/g, '').replace(/&amp;/g, '&');
         return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${cleanUrl}</a>`;
     });
 
-    // 4. Convert bold text **text**
+    // Convert bold text **text**
     escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     escaped = escaped.replace(/__(.*?)__/g, '<strong>$1</strong>');
     
-    // 5. Convert italic text *text*
+    // Convert italic text *text*
     escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
     escaped = escaped.replace(/_(.*?)_/g, '<em>$1</em>');
 
-    // 6. Convert line breaks
+    // Convert line breaks
     return escaped.replace(/\n/g, '<br>');
 }
 
