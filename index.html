@@ -457,15 +457,6 @@
             outline: none;
         }
 
-        .slot-input-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .slot-input-row input:nth-child(1) { flex: 1; }
-        .slot-input-row input:nth-child(2) { flex: 2; }
-
         .booked-vtc-list-card {
             background: var(--bg-dark);
             border: 1px solid var(--border-color);
@@ -663,7 +654,7 @@
             </div>
             <div id="modal-body"></div>
 
-            <!-- Public Booked VTC List Section (Visible before booking button) -->
+            <!-- Public Booked VTC List Section -->
             <div id="utl-booked-vtcs-container" class="booked-vtc-list-card" style="display: none;">
                 <h4>🚛 Registered & Booked VTC Slots <span id="booked-vtc-count-tag" style="font-size: 12px; color: var(--text-dim);">(0)</span></h4>
                 <div id="booked-vtcs-list-body" style="max-height: 180px; overflow-y: auto;"></div>
@@ -1074,8 +1065,8 @@
                         route: e.route,
                         description: e.description || '',
                         routeImage: e.route_image || '',
-                        slotImages: e.slot_images || [],
-                        bookedVtcs: e.booked_vtcs || [],
+                        slotImages: Array.isArray(e.slot_images) ? e.slot_images : [],
+                        bookedVtcs: Array.isArray(e.booked_vtcs) ? e.booked_vtcs : [],
                         rsvps: e.rsvps || { attending: 0, unsure: 0, declined: 0 },
                         driverRsvps: e.driver_rsvps || {}
                     }));
@@ -1236,7 +1227,6 @@
         };
 
         window.openSlotBookingModal = function() {
-            closeModal('event-modal');
             const evt = events.find(e => e.id === activeEventId);
             if (!evt) return;
 
@@ -1245,8 +1235,10 @@
             const container = document.getElementById('slot-maps-display-container');
             container.innerHTML = '';
 
-            if (evt.slotImages && evt.slotImages.length > 0) {
-                evt.slotImages.forEach((imgUrl, index) => {
+            const validSlotImages = Array.isArray(evt.slotImages) ? evt.slotImages.filter(Boolean) : [];
+
+            if (validSlotImages.length > 0) {
+                validSlotImages.forEach((imgUrl, index) => {
                     const mapDiv = document.createElement('div');
                     mapDiv.style.marginBottom = '15px';
                     mapDiv.innerHTML = `
@@ -1260,8 +1252,11 @@
             }
 
             document.getElementById('slot-booking-form').reset();
-            const modal = document.getElementById('slot-booking-modal');
-            if (modal) modal.classList.add('active');
+            
+            // Switch modals safely
+            closeModal('event-modal');
+            const slotModal = document.getElementById('slot-booking-modal');
+            if (slotModal) slotModal.classList.add('active');
         };
 
         window.submitSlotBooking = async function(e) {
@@ -1288,7 +1283,7 @@
                 bookedAt: new Date().toISOString()
             };
 
-            const updatedBookedVtcs = evt.bookedVtcs ? [...evt.bookedVtcs, newBooking] : [newBooking];
+            const updatedBookedVtcs = Array.isArray(evt.bookedVtcs) ? [...evt.bookedVtcs, newBooking] : [newBooking];
 
             if (dbClient) {
                 await dbClient
@@ -1340,7 +1335,7 @@
             if (!isStaff) return;
 
             const evt = events.find(e => e.id === activeEventId);
-            if (!evt || !evt.bookedVtcs) return;
+            if (!evt || !Array.isArray(evt.bookedVtcs)) return;
 
             if (!confirm(`Are you sure you want to cancel the booking for "${evt.bookedVtcs[indexToRemove].vtcName}"?`)) return;
 
@@ -1526,7 +1521,7 @@
             const bookedVtcsBody = document.getElementById('booked-vtcs-list-body');
             const bookedVtcsCountTag = document.getElementById('booked-vtc-count-tag');
 
-            const bookedVtcsList = evt.bookedVtcs || [];
+            const bookedVtcsList = Array.isArray(evt.bookedVtcs) ? evt.bookedVtcs : [];
 
             if (evt.type === 'utl_own') {
                 slotBookingBtnContainer.style.display = 'block';
