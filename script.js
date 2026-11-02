@@ -621,6 +621,7 @@ window.openStaffManualBookingModal = function() {
 
 window.submitStaffManualBooking = async function(e) {
     e.preventDefault();
+    console.log("🔥 Manual booking button was clicked!");
     const evt = events.find(e => e.id === activeEventId);
     if (!evt) return;
 
