@@ -23,6 +23,29 @@
             --discord-blurple: #5865F2;
         }
 
+        /* December Festive Theme Overrides */
+        body.theme-december {
+            --bg-dark: #0a1812;
+            --bg-card: #132e22;
+            --bg-hover: #1c4232;
+            --primary-blue: #ffd700; /* Gold */
+            --deep-purple: #1b4d3e;
+            --accent-purple: #8b0000; /* Deep Christmas Red */
+            --border-color: #245e48;
+        }
+
+        body.theme-december header {
+            border-bottom: 2px solid #e74c3c; /* Red border accent */
+            background: linear-gradient(135deg, #1b4d3e, #8b0000);
+        }
+
+        body.theme-december .filter-tab.active, 
+        body.theme-december .filter-tab:hover {
+            background-color: #8b0000;
+            color: #ffd700;
+            border-color: #ffd700;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -36,6 +59,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            transition: background-color 0.3s ease;
         }
 
         header {
@@ -47,6 +71,7 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 15px;
+            transition: all 0.3s ease;
         }
 
         .header-logo {
@@ -261,6 +286,7 @@
             gap: 6px;
             transition: border-color 0.2s;
             overflow: hidden;
+            position: relative;
         }
 
         .calendar-cell:hover {
@@ -271,16 +297,34 @@
             opacity: 0.4;
         }
 
-        /* Highlight styling for the current day */
         .calendar-cell.today {
             border: 2px solid var(--primary-blue);
             background-color: rgba(28, 200, 250, 0.05);
+        }
+
+        body.theme-december .calendar-cell.today {
+            border: 2px solid #ffd700;
+            background-color: rgba(255, 215, 0, 0.08);
         }
 
         .calendar-cell.today .cell-number {
             color: var(--primary-blue);
             font-weight: 800;
         }
+
+        /* Holiday styling badges inside December cells */
+        .holiday-badge {
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 2px;
+            display: inline-block;
+            text-align: center;
+        }
+        .badge-xmas { background-color: #e74c3c; color: #fff; }
+        .badge-boxing { background-color: #3498db; color: #fff; }
+        .badge-NYE { background-color: #9b59b6; color: #fff; }
 
         .cell-number {
             font-size: 14px;
@@ -644,7 +688,6 @@
             console.error('Supabase error:', e);
         }
 
-        // Initialize to the actual current date dynamically
         let currentDate = new Date();
         let currentFilter = 'all';
         let activeEventId = null;
@@ -833,6 +876,13 @@
             const month = currentDate.getMonth();
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             
+            // Check if December (month 11) to apply festive theme
+            if (month === 11) {
+                document.body.classList.add('theme-december');
+            } else {
+                document.body.classList.remove('theme-december');
+            }
+
             const monthLabel = document.getElementById('current-month-label');
             if (monthLabel) monthLabel.innerText = `${monthNames[month]} ${year}`;
             
@@ -842,7 +892,6 @@
                 const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
                 const totalDays = new Date(year, month + 1, 0).getDate();
 
-                // Get today's real date components to check for highlighting
                 const todayObj = new Date();
                 const isCurrentMonthYear = (todayObj.getFullYear() === year && todayObj.getMonth() === month);
                 const currentDayNum = todayObj.getDate();
@@ -857,14 +906,26 @@
                     const cell = document.createElement('div');
                     cell.className = 'calendar-cell';
                     
-                    // Add 'today' class if this cell matches the current day
                     if (isCurrentMonthYear && day === currentDayNum) {
                         cell.classList.add('today');
                     }
 
                     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     
-                    cell.innerHTML = `<span class="cell-number">${day}</span>`;
+                    let cellContent = `<span class="cell-number">${day}</span>`;
+
+                    // Add Christmas, Boxing Day, and New Year's Eve badges for December
+                    if (month === 11) {
+                        if (day === 25) {
+                            cellContent += `<div class="holiday-badge badge-xmas">🎄 Christmas Day</div>`;
+                        } else if (day === 26) {
+                            cellContent += `<div class="holiday-badge badge-boxing">🎁 Boxing Day</div>`;
+                        } else if (day === 31) {
+                            cellContent += `<div class="holiday-badge badge-NYE">🎆 New Year's Eve</div>`;
+                        }
+                    }
+
+                    cell.innerHTML = cellContent;
 
                     const dayEvents = events.filter(e => e.date && e.date.startsWith(dateStr) && (currentFilter === 'all' || e.type === currentFilter));
                     
