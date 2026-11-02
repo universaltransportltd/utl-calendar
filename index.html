@@ -463,8 +463,12 @@
             margin-bottom: 8px;
         }
 
-        .slot-input-row input {
+        .slot-input-row input:nth-child(1) {
             flex: 1;
+        }
+
+        .slot-input-row input:nth-child(2) {
+            flex: 2;
         }
 
         .rsvp-container {
@@ -675,7 +679,7 @@
                     </div>
                     <div class="form-group">
                         <label>VTC Logo Image URL *</label>
-                        <input type="url" id="slot-vtc-logo" required placeholder="https://i.imgur.com/logo.png">
+                        <input type="url" id="slot-vtc-logo" required placeholder="https://imghippo.com/i/logo.png">
                     </div>
                     <div class="form-group">
                         <label>VTC HaulMP Page Link *</label>
@@ -751,17 +755,18 @@
                 </div>
                 <div class="form-group">
                     <label>Route Map Image URL</label>
-                    <input type="url" id="evt-img-url" placeholder="https://i.imgur.com/..." required>
+                    <input type="url" id="evt-img-url" placeholder="https://imghippo.com/i/..." required>
                 </div>
 
                 <div class="form-group">
-                    <label>Slot Booking Map Image URLs (Add multiple images for F7, Nordic Crown, etc.)</label>
+                    <label>Slot Booking Maps (Name + Imghippo Image URL)</label>
                     <div id="slot-map-inputs-container">
                         <div class="slot-input-row">
-                            <input type="url" class="slot-image-url-input" placeholder="https://i.imgur.com/slotmap1.jpg">
+                            <input type="text" class="slot-map-name-input" placeholder="e.g. F7 - Slots 1-4">
+                            <input type="url" class="slot-map-url-input" placeholder="https://imghippo.com/i/slotmap1.jpg">
                         </div>
                     </div>
-                    <button type="button" class="btn btn-secondary" style="margin-top: 5px; font-size: 11px; padding: 6px 12px;" onclick="addSlotMapInputField()">+ Add Another Slot Map Image</button>
+                    <button type="button" class="btn btn-secondary" style="margin-top: 5px; font-size: 11px; padding: 6px 12px;" onclick="addSlotMapInputField()">+ Add Another Slot Map</button>
                 </div>
 
                 <button type="submit" class="btn" id="form-submit-btn" style="width: 100%; margin-top: 10px;">Publish Event</button>
@@ -958,12 +963,13 @@
             }
         }
 
-        window.addSlotMapInputField = function(value = '') {
+        window.addSlotMapInputField = function(name = '', url = '') {
             const container = document.getElementById('slot-map-inputs-container');
             const row = document.createElement('div');
             row.className = 'slot-input-row';
             row.innerHTML = `
-                <input type="url" class="slot-image-url-input" placeholder="https://i.imgur.com/slotmap.jpg" value="${value}">
+                <input type="text" class="slot-map-name-input" placeholder="e.g. F7 - Slots 1-4" value="${name}">
+                <input type="url" class="slot-map-url-input" placeholder="https://imghippo.com/i/slotmap.jpg" value="${url}">
                 <button type="button" class="btn btn-danger" style="padding: 6px 10px;" onclick="this.parentElement.remove()">×</button>
             `;
             container.appendChild(row);
@@ -979,11 +985,9 @@
 
             document.getElementById('event-form').reset();
             document.getElementById('edit-event-id').value = '';
-            document.getElementById('slot-map-inputs-container').innerHTML = `
-                <div class="slot-input-row">
-                    <input type="url" class="slot-image-url-input" placeholder="https://i.imgur.com/slotmap1.jpg">
-                </div>
-            `;
+            document.getElementById('slot-map-inputs-container').innerHTML = '';
+            addSlotMapInputField('', '');
+
             document.getElementById('management-modal-title').innerText = '⚙️ Events Team Control Panel (Publish)';
             document.getElementById('form-submit-btn').innerText = 'Publish Event';
 
@@ -1013,9 +1017,9 @@
             const container = document.getElementById('slot-map-inputs-container');
             container.innerHTML = '';
             if (evt.slotImages && evt.slotImages.length > 0) {
-                evt.slotImages.forEach(url => addSlotMapInputField(url));
+                evt.slotImages.forEach(item => addSlotMapInputField(item.name, item.url));
             } else {
-                addSlotMapInputField('');
+                addSlotMapInputField('', '');
             }
 
             document.getElementById('management-modal-title').innerText = '✏️ Edit Event: ' + evt.title;
@@ -1227,12 +1231,13 @@
             container.innerHTML = '';
 
             if (evt.slotImages && evt.slotImages.length > 0) {
-                evt.slotImages.forEach((imgUrl, index) => {
+                evt.slotImages.forEach((item, index) => {
+                    const mapName = item.name ? item.name : `Slot Option / Area Map #${index + 1}`;
                     const mapDiv = document.createElement('div');
                     mapDiv.style.marginBottom = '15px';
                     mapDiv.innerHTML = `
-                        <p style="font-size: 13px; font-weight: bold; color: var(--primary-blue);">📍 Slot Option / Area Map #${index + 1}</p>
-                        <img src="${imgUrl.trim()}" style="max-width:100%; max-height:220px; border-radius:6px; border:1px solid var(--primary-blue); cursor:pointer;" onclick="openLightbox('${imgUrl.trim()}')" title="Click to enlarge slot map">
+                        <p style="font-size: 13px; font-weight: bold; color: var(--primary-blue);">📍 ${mapName}</p>
+                        <img src="${item.url.trim()}" style="max-width:100%; max-height:220px; border-radius:6px; border:1px solid var(--primary-blue); cursor:pointer;" onclick="openLightbox('${item.url.trim()}')" title="Click to enlarge slot map">
                     `;
                     container.appendChild(mapDiv);
                 });
@@ -1260,7 +1265,7 @@
 
             const payload = {
                 username: "UTL Convoy Slot Booking Bot",
-                avatar_url: "https://i.imgur.com/86k1z0Z.png",
+                avatar_url: "https://imghippo.com/i/avatar.png",
                 embeds: [
                     {
                         title: "🎟️ New VTC Convoy Slot Booking!",
@@ -1326,8 +1331,13 @@
             const editId = document.getElementById('edit-event-id').value;
             const imageUrl = document.getElementById('evt-img-url').value.trim();
             
-            const slotInputs = document.querySelectorAll('.slot-image-url-input');
-            const slotImages = Array.from(slotInputs).map(inp => inp.value.trim()).filter(Boolean);
+            const rows = document.querySelectorAll('.slot-input-row');
+            const slotImages = Array.from(rows).map(row => {
+                const nameInp = row.querySelector('.slot-map-name-input').value.trim();
+                const urlInp = row.querySelector('.slot-map-url-input').value.trim();
+                if (!urlInp) return null;
+                return { name: nameInp || 'Slot Area Map', url: urlInp };
+            }).filter(Boolean);
 
             const title = document.getElementById('evt-title').value;
             const type = document.getElementById('evt-type').value;
