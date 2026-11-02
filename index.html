@@ -843,14 +843,14 @@
         </div>
     </div>
 
-<!-- Staff Manual Booking Modal -->
+    <!-- Staff Manual Booking Modal -->
     <div class="modal-overlay" id="staff-manual-booking-modal">
         <div class="modal-card" style="max-width: 450px;">
             <div class="modal-header">
                 <h2>➕ Manual VTC Slot Assignment</h2>
                 <button class="close-btn" onclick="closeModal('staff-manual-booking-modal')">×</button>
             </div>
-            <form onsubmit="submitStaffManualBooking(event)">
+            <form id="staff-manual-booking-form" onsubmit="submitStaffManualBooking(event)">
                 <div class="form-group">
                     <label>VTC Company Name *</label>
                     <input type="text" id="manual-vtc-name" required placeholder="e.g. Universal Transport Ltd">
