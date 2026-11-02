@@ -518,15 +518,11 @@ window.closeModal = function(modalId, keepActiveId = false) {
     }
 };
 
-// Allow clicking outside the modal card background overlay to close it safely
+// Safe click-outside listener that checks if the target class includes 'modal' (the dark backdrop)
 window.addEventListener('click', function(e) {
-    ['event-modal', 'slot-booking-modal', 'staff-manual-booking-modal', 'management-modal'].forEach(modalId => {
-        const modal = document.getElementById(modalId);
-        // Only trigger if the click was directly on the modal background overlay, not inside the card
-        if (modal && modal === e.target) {
-            closeModal(modalId);
-        }
-    });
+    if (e.target && e.target.classList && e.target.classList.contains('modal')) {
+        closeModal(e.target.id);
+    }
 });
 
 window.openLightbox = function(imgSrc) {
