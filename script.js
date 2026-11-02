@@ -226,7 +226,12 @@ window.openEditEventModal = function() {
     document.getElementById('evt-route').value = evt.route || '';
     document.getElementById('evt-desc').value = evt.description || '';
     document.getElementById('evt-img-url').value = evt.routeImage || '';
-    document.getElementById('evt-slot-images').value = Array.isArray(evt.slotImages) ? evt.slotImages.join(', ') : '';
+    
+    // Safely parse slot images so [object Object] never appears in the edit field
+    const cleanSlotImages = Array.isArray(evt.slotImages) 
+        ? evt.slotImages.map(img => (typeof img === 'string' ? img : (img?.url || ''))).filter(Boolean)
+        : [];
+    document.getElementById('evt-slot-images').value = cleanSlotImages.join(', ');
 
     document.getElementById('management-modal-title').innerText = '✏️ Edit Event: ' + evt.title;
     document.getElementById('form-submit-btn').innerText = 'Save Changes';
@@ -423,7 +428,6 @@ window.openLightbox = function(imgSrc) {
 };
 
 window.openSlotBookingModal = function() {
-    console.log("Opening slot booking modal for event ID:", activeEventId);
     const evt = events.find(e => e.id === activeEventId);
     if (!evt) {
         alert("⚠️ Active event reference not found.");
@@ -441,6 +445,8 @@ window.openSlotBookingModal = function() {
 
     const bookedVtcs = Array.isArray(evt.bookedVtcs) ? evt.bookedVtcs : [];
     const bookedSlotChoices = bookedVtcs.map(b => b.slotChoice);
+    
+    // Completely remove booked slots from the available selection list
     const availableSlots = standardSlots.filter(slot => !bookedSlotChoices.includes(slot));
 
     const bannerBody = document.getElementById('available-slots-list-body');
@@ -471,13 +477,14 @@ window.openSlotBookingModal = function() {
     const container = document.getElementById('slot-maps-display-container');
     if (container) {
         container.innerHTML = '';
+        
+        // Safely parse slot images regardless of whether they were stored as strings or objects
         const validSlotImages = Array.isArray(evt.slotImages) 
-            ? evt.slotImages.map(img => String(img || '')).filter(img => img.trim().length > 0) 
+            ? evt.slotImages.map(img => (typeof img === 'string' ? img : (img?.url || ''))).map(i => i.trim()).filter(Boolean)
             : [];
 
         if (validSlotImages.length > 0) {
-            validSlotImages.forEach((imgUrl, index) => {
-                const cleanUrl = imgUrl.trim();
+            validSlotImages.forEach((cleanUrl, index) => {
                 const mapDiv = document.createElement('div');
                 mapDiv.style.marginBottom = '15px';
                 mapDiv.innerHTML = `
@@ -727,7 +734,7 @@ function formatDescription(text) {
     escaped = escaped.replace(/\n/g, '<br>');
 
     return escaped;
-}
+};
 
 window.removeRsvpUser = async function(driverName) {
     const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
