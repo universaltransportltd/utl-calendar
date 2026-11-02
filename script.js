@@ -594,16 +594,25 @@ window.openStaffManualBookingModal = function() {
     const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
     if (!isStaff) return;
 
-    // Fallback: If activeEventId is lost in memory, grab it from sessionStorage
+    // 1. Ensure we have an active event ID from memory or sessionStorage
     if (!activeEventId) {
         activeEventId = sessionStorage.getItem('utl_active_event_id');
     }
 
-    const evt = events.find(e => e.id === activeEventId);
+    // 2. Find the event, with a safe fallback to the first event if array is populated
+    let evt = events.find(e => e.id === activeEventId);
+    if (!evt && events.length > 0) {
+        evt = events[0];
+    }
+
     if (!evt) {
-        alert("⚠️ Error: No active event selected. Please close and re-open the event details card.");
+        alert("⚠️ Error: Events are still loading or no event is selected. Please wait a second and try again.");
         return;
     }
+
+    // Lock in the active event ID
+    activeEventId = evt.id;
+    sessionStorage.setItem('utl_active_event_id', activeEventId);
 
     const generatedSlots = getGeneratedSlotsForEvent(evt);
     const bookedVtcs = Array.isArray(evt.bookedVtcs) ? evt.bookedVtcs : [];
