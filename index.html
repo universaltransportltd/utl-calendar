@@ -46,6 +46,22 @@
             border-color: #ffd700;
         }
 
+        /* Snow Overlay Canvas */
+        #snow-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+            display: none;
+        }
+
+        body.theme-december #snow-canvas {
+            display: block;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -72,6 +88,8 @@
             flex-wrap: wrap;
             gap: 15px;
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
         }
 
         .header-logo {
@@ -158,6 +176,8 @@
             display: grid;
             grid-template-columns: 320px 1fr;
             gap: 25px;
+            position: relative;
+            z-index: 2;
         }
 
         @media (max-width: 1024px) {
@@ -530,6 +550,8 @@
 </head>
 <body>
 
+    <canvas id="snow-canvas"></canvas>
+
     <header>
         <div class="header-logo">
             <img src="UTL3DLong.jpg" alt="Universal Transport Ltd Logo" onerror="this.style.display='none'; document.getElementById('fallback-title').style.display='block';">
@@ -692,6 +714,81 @@
         let currentFilter = 'all';
         let activeEventId = null;
         let events = [];
+
+        /* Snow Animation Setup */
+        const canvas = document.getElementById('snow-canvas');
+        const ctx = canvas.getContext('2d');
+        let flakes = [];
+        let animFrameId = null;
+
+        function resizeSnowCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeSnowCanvas);
+        resizeSnowCanvas();
+
+        function createFlakes() {
+            flakes = [];
+            const flakeCount = Math.floor(window.innerWidth / 12);
+            for (let i = 0; i < flakeCount; i++) {
+                flakes.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    r: Math.random() * 3 + 1,
+                    d: Math.random() * 1 + 0.5,
+                    opacity: Math.random() * 0.7 + 0.3
+                });
+            }
+        }
+
+        function drawSnow() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.beginPath();
+            
+            for (let i = 0; i < flakes.length; i++) {
+                const f = flakes[i];
+                ctx.moveTo(f.x, f.y);
+                ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2, true);
+            }
+            ctx.fill();
+            updateSnow();
+            animFrameId = requestAnimationFrame(drawSnow);
+        }
+
+        function updateSnow() {
+            for (let i = 0; i < flakes.length; i++) {
+                const f = flakes[i];
+                f.y += Math.pow(f.d, 2) + 0.8;
+                f.x += Math.sin(f.y / 30) * 0.5;
+
+                if (f.y > canvas.height) {
+                    flakes[i] = {
+                        x: Math.random() * canvas.width,
+                        y: -10,
+                        r: f.r,
+                        d: f.d,
+                        opacity: f.opacity
+                    };
+                }
+            }
+        }
+
+        function startSnow() {
+            if (!animFrameId) {
+                createFlakes();
+                drawSnow();
+            }
+        }
+
+        function stopSnow() {
+            if (animFrameId) {
+                cancelAnimationFrame(animFrameId);
+                animFrameId = null;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
 
         const categoryColors = {
             truckfest: '#1CC8FA',
@@ -876,11 +973,13 @@
             const month = currentDate.getMonth();
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             
-            // Check if December (month 11) to apply festive theme
+            // Check if December (month 11) to apply festive theme and falling snow
             if (month === 11) {
                 document.body.classList.add('theme-december');
+                startSnow();
             } else {
                 document.body.classList.remove('theme-december');
+                stopSnow();
             }
 
             const monthLabel = document.getElementById('current-month-label');
