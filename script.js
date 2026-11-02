@@ -583,9 +583,10 @@ window.submitStaffManualBooking = async function(e) {
     const evt = events.find(e => e.id === activeEventId);
     if (!evt) return;
 
+    const vtcLogoInput = document.getElementById('manual-vtc-logo').value.trim();
     const newBooking = {
         vtcName: document.getElementById('manual-vtc-name').value.trim(),
-        vtcLogo: document.getElementById('manual-vtc-logo').value.trim(),
+        vtcLogo: vtcLogoInput !== "" ? vtcLogoInput : "https://i.imgur.com/86k1z0Z.png",
         vtcLink: document.getElementById('manual-vtc-link').value.trim(),
         slotChoice: document.getElementById('manual-vtc-slot').value,
         drivers: document.getElementById('manual-vtc-drivers').value.trim(),
@@ -597,10 +598,15 @@ window.submitStaffManualBooking = async function(e) {
     const updatedBookedVtcs = Array.isArray(evt.bookedVtcs) ? [...evt.bookedVtcs, newBooking] : [newBooking];
 
     if (dbClient) {
-        await dbClient
+        const { error } = await dbClient
             .from('utl_events')
             .update({ booked_vtcs: updatedBookedVtcs })
             .eq('id', evt.id);
+
+        if (error) {
+            alert('Failed to save manual booking: ' + error.message);
+            return;
+        }
     }
 
     alert('✅ VTC manually assigned successfully!');
