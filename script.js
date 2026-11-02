@@ -841,19 +841,19 @@ window.deleteCurrentEvent = async function() {
 function formatDescription(text) {
     if (!text) return '';
     
-    // 1. Escape basic HTML entities to keep things safe
+    // 1. Escape HTML entities to keep things secure
     let escaped = text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
-    // 2. Convert markdown links [Text](URL) directly to clean HTML tags
+    // 2. Convert markdown links [Text](URL) cleanly
     escaped = escaped.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(match, textContent, url) {
         const cleanUrl = url.replace(/&amp;/g, '&').trim();
         return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${textContent}</a>`;
     });
 
-    // 3. Convert standalone raw URLs into clickable links (that aren't already part of an anchor tag)
+    // 3. Convert standalone raw URLs into clickable links
     escaped = escaped.replace(/(https?:\/\/[^\s<"]+)(?![^<]*>|[^<>]*<\/a>)/g, function(url) {
         const cleanUrl = url.replace(/&quot;|["']/g, '').replace(/&amp;/g, '&');
         return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: underline; word-break: break-all;">${cleanUrl}</a>`;
@@ -870,6 +870,7 @@ function formatDescription(text) {
     // 6. Convert line breaks
     return escaped.replace(/\n/g, '<br>');
 }
+
 window.removeRsvpUser = async function(driverName) {
     const isStaff = localStorage.getItem('utl_staff_unlocked') === 'true';
     if (!isStaff) return;
