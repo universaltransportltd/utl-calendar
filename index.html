@@ -36,9 +36,9 @@
             --candy-stripe-pattern: repeating-linear-gradient(
                 -45deg,
                 #d10a24,
-                #d10a24 6px,
-                #ffffff 6px,
-                #ffffff 12px
+                #d10a24 5px,
+                #ffffff 5px,
+                #ffffff 10px
             );
         }
 
@@ -256,23 +256,22 @@
             gap: 3px;
         }
 
-        /* Bottom Clock Container Layout */
+        /* Bottom Clock Container Layout (Transparent / No Background Card) */
         .bottom-clock-container {
-            margin-top: 35px;
+            margin-top: 30px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
+            padding: 10px;
+            background: transparent;
+            border: none;
             position: relative;
             z-index: 5;
         }
 
         /* ==========================================
-           STANDARD CLOCK STYLES (Non-December)
+           STANDARD CLOCK STYLES (Scaled Down & Transparent)
            ========================================== */
         .std-clock-wrapper {
             display: flex;
@@ -282,17 +281,17 @@
         }
 
         .std-clock-header {
-            font-size: 15px;
-            letter-spacing: 4px;
+            font-size: 12px;
+            letter-spacing: 3px;
             text-transform: uppercase;
             color: #00d2ff;
-            margin-bottom: 14px;
-            padding: 6px 16px;
+            margin-bottom: 8px;
+            padding: 4px 12px;
             background: rgba(10, 3, 26, 0.85);
             backdrop-filter: blur(6px);
             border: 1px solid rgba(0, 210, 255, 0.3);
-            border-radius: 6px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 210, 255, 0.2);
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 210, 255, 0.2);
             font-weight: 900;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
             font-family: 'Arial Black', Arial, sans-serif;
@@ -301,21 +300,21 @@
         .std-flip-clock {
             display: flex;
             align-items: center;
-            gap: 10px;
-            filter: drop-shadow(0px 10px 20px rgba(0, 0, 0, 0.95));
+            gap: 6px;
+            filter: drop-shadow(0px 6px 14px rgba(0, 0, 0, 0.95));
         }
 
         .std-flip-card {
             position: relative;
-            width: 72px;
-            height: 104px;
-            font-size: 72px;
+            width: 44px;
+            height: 64px;
+            font-size: 42px;
             font-weight: bold;
             color: #00d2ff;
             background-color: #1f0442;
-            border-radius: 8px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(0, 0, 0, 0.6);
-            border: 2px solid #0f0224;
+            border-radius: 6px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8), inset 0 0 6px rgba(0, 0, 0, 0.6);
+            border: 1.5px solid #0f0224;
             overflow: hidden;
             display: flex;
             justify-content: center;
@@ -354,47 +353,47 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            gap: 16px;
-            padding: 0 2px;
+            gap: 10px;
+            padding: 0 1px;
         }
 
         .std-dot {
-            width: 8px;
-            height: 8px;
+            width: 5px;
+            height: 5px;
             background-color: #00d2ff;
             border-radius: 2px;
-            box-shadow: 0 0 8px rgba(0, 210, 255, 0.8), 2px 2px 4px rgba(0, 0, 0, 0.9);
+            box-shadow: 0 0 6px rgba(0, 210, 255, 0.8), 2px 2px 4px rgba(0, 0, 0, 0.9);
         }
 
         #std-date {
-            font-size: 18px;
-            margin-top: 18px;
+            font-size: 12px;
+            margin-top: 12px;
             letter-spacing: 2px;
             text-transform: uppercase;
             color: #ffffff;
             background: rgba(10, 3, 26, 0.85);
             backdrop-filter: blur(6px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 8px 20px;
-            border-radius: 6px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.9);
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+            padding: 5px 14px;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.9);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
             font-weight: bold;
             font-family: 'Arial Black', Arial, sans-serif;
         }
 
         #std-utc-display {
-            font-size: 15px;
-            margin-top: 12px;
-            letter-spacing: 3px;
+            font-size: 11px;
+            margin-top: 8px;
+            letter-spacing: 2px;
             text-transform: uppercase;
             color: #00d2ff;
             background: rgba(10, 3, 26, 0.85);
             backdrop-filter: blur(6px);
             border: 1px solid rgba(0, 210, 255, 0.3);
-            padding: 6px 16px;
-            border-radius: 6px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 210, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 210, 255, 0.2);
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
             font-weight: bold;
             font-family: 'Arial Black', Arial, sans-serif;
@@ -402,7 +401,7 @@
 
 
         /* ==========================================
-           DECEMBER XMAS CLOCK STYLES (Candy Cane Neon)
+           DECEMBER XMAS CLOCK STYLES (Scaled Down & Transparent)
            ========================================== */
         .xmas-clock-wrapper {
             display: flex;
@@ -421,50 +420,50 @@
 
         .xmas-neon-path-cyan {
             stroke: var(--neon-cyan);
-            stroke-width: 4px;
+            stroke-width: 3px;
             fill: none;
             stroke-linecap: round;
             stroke-linejoin: round;
-            filter: drop-shadow(0 0 6px var(--neon-cyan-glow)) drop-shadow(0 0 14px var(--neon-cyan));
+            filter: drop-shadow(0 0 5px var(--neon-cyan-glow)) drop-shadow(0 0 10px var(--neon-cyan));
         }
 
         .xmas-neon-path-pink {
             stroke: var(--neon-pink);
-            stroke-width: 4px;
+            stroke-width: 3px;
             fill: none;
             stroke-linecap: round;
             stroke-linejoin: round;
-            filter: drop-shadow(0 0 6px var(--neon-pink-glow)) drop-shadow(0 0 14px var(--neon-pink));
+            filter: drop-shadow(0 0 5px var(--neon-pink-glow)) drop-shadow(0 0 10px var(--neon-pink));
         }
 
         .xmas-header-wrapper {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 14px;
         }
 
         .xmas-header-svg {
-            top: -8px;
-            left: -12px;
-            width: calc(100% + 24px);
-            height: calc(100% + 16px);
+            top: -6px;
+            left: -10px;
+            width: calc(100% + 20px);
+            height: calc(100% + 12px);
         }
 
         .xmas-clock-header {
             position: relative;
-            font-size: 15px;
-            letter-spacing: 4px;
+            font-size: 12px;
+            letter-spacing: 3px;
             text-transform: uppercase;
             color: var(--white-pure, #ffffff);
-            padding: 10px 32px 10px 48px;
+            padding: 7px 24px 7px 36px;
             background: linear-gradient(180deg, var(--red-top) 0%, var(--red-main) 60%, var(--red-dark) 100%);
-            border-radius: 40px;
+            border-radius: 30px;
             box-shadow: 
-                0 5px 0 0 var(--green-edge),
-                0 10px 20px rgba(0, 0, 0, 0.8),
+                0 3px 0 0 var(--green-edge),
+                0 6px 14px rgba(0, 0, 0, 0.8),
                 inset 0 2px 2px rgba(255, 255, 255, 0.6),
-                inset 0 -3px 4px rgba(0, 0, 0, 0.5);
+                inset 0 -2px 3px rgba(0, 0, 0, 0.5);
             font-weight: 900;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.25);
             z-index: 5;
         }
@@ -474,11 +473,11 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 36px;
+            width: 28px;
             height: 100%;
             background: var(--candy-stripe-pattern);
-            border-top-left-radius: 40px;
-            border-bottom-left-radius: 40px;
+            border-top-left-radius: 30px;
+            border-bottom-left-radius: 30px;
             border-right: 2px solid rgba(0, 0, 0, 0.4);
             box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
         }
@@ -487,28 +486,28 @@
             position: relative;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             z-index: 2;
         }
 
         .xmas-flip-card {
             position: relative;
-            width: 76px;
-            height: 110px;
+            width: 48px;
+            height: 70px;
             font-family: 'Orbitron', 'Montserrat', sans-serif;
-            font-size: 74px;
+            font-size: 46px;
             font-weight: 900;
             color: #ffffff;
-            border-radius: 20px;
+            border-radius: 12px;
             background: linear-gradient(180deg, var(--red-top) 0%, var(--red-main) 60%, var(--red-dark) 100%);
-            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             box-shadow: 
-                0 6px 0 0 var(--green-edge),
-                0 12px 25px rgba(0, 0, 0, 0.85),
-                inset 0 3px 3px rgba(255, 255, 255, 0.6),
-                inset 0 -4px 6px rgba(0, 0, 0, 0.6);
+                0 4px 0 0 var(--green-edge),
+                0 8px 18px rgba(0, 0, 0, 0.85),
+                inset 0 2px 2px rgba(255, 255, 255, 0.6),
+                inset 0 -3px 4px rgba(0, 0, 0, 0.6);
             overflow: hidden !important;
-            clip-path: inset(0 0 0 0 round 20px);
+            clip-path: inset(0 0 0 0 round 12px);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -518,13 +517,13 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 24px;
+            width: 16px;
             height: 100%;
             background: var(--candy-stripe-pattern);
-            border-top-left-radius: 20px;
-            border-bottom-left-radius: 20px;
-            border-right: 2px solid rgba(0, 0, 0, 0.4);
-            box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.6);
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+            border-right: 1.5px solid rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
             z-index: 1;
         }
 
@@ -532,13 +531,13 @@
             position: absolute;
             top: 0;
             right: 0;
-            width: 24px;
+            width: 16px;
             height: 100%;
             background: var(--candy-stripe-pattern);
-            border-top-right-radius: 20px;
-            border-bottom-right-radius: 20px;
-            border-left: 2px solid rgba(0, 0, 0, 0.4);
-            box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.6);
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+            border-left: 1.5px solid rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
             z-index: 1;
         }
 
@@ -548,7 +547,7 @@
             top: 50%;
             left: 0;
             right: 0;
-            height: 3px;
+            height: 2px;
             background-color: rgba(0, 0, 0, 0.65);
             z-index: 6;
             box-shadow: 0 1px 1px rgba(255, 255, 255, 0.35);
@@ -565,7 +564,7 @@
             transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-in-out;
             will-change: transform, opacity;
             color: #ffffff !important;
-            text-shadow: 0 0 3px #000000, 0 2px 6px #000000, 0 4px 10px rgba(0, 0, 0, 0.9);
+            text-shadow: 0 0 2px #000000, 0 1px 4px #000000, 0 2px 6px rgba(0, 0, 0, 0.9);
             z-index: 3;
         }
 
@@ -577,45 +576,45 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            gap: 16px;
-            padding: 0 2px;
+            gap: 10px;
+            padding: 0 1px;
             z-index: 5;
         }
 
         .xmas-dot {
-            width: 12px;
-            height: 12px;
+            width: 8px;
+            height: 8px;
             background: radial-gradient(circle at 35% 35%, #ffffff, #d10a24 70%);
             border: 1px solid #ffffff;
             border-radius: 50%;
-            box-shadow: 0 0 8px var(--neon-cyan), 0 2px 4px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 6px var(--neon-cyan), 0 1px 3px rgba(0, 0, 0, 0.8);
         }
 
         .xmas-date-wrapper {
             position: relative;
-            margin-top: 20px;
+            margin-top: 14px;
         }
 
         .xmas-date-svg {
-            top: -8px;
-            left: -12px;
-            width: calc(100% + 24px);
-            height: calc(100% + 16px);
+            top: -6px;
+            left: -10px;
+            width: calc(100% + 20px);
+            height: calc(100% + 12px);
         }
 
         #xmas-date {
             position: relative;
-            font-size: 15px;
-            letter-spacing: 3px;
+            font-size: 12px;
+            letter-spacing: 2px;
             text-transform: uppercase;
             color: #ffffff;
             background: linear-gradient(180deg, #188a52 0%, #10633a 60%, #083c22 100%);
             border: 1px solid rgba(255, 255, 255, 0.25);
-            padding: 10px 48px 10px 32px;
-            border-radius: 40px;
-            box-shadow: 0 5px 0 0 var(--red-main), 0 10px 22px rgba(0, 0, 0, 0.85), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -3px 4px rgba(0, 0, 0, 0.5);
+            padding: 7px 36px 7px 24px;
+            border-radius: 30px;
+            box-shadow: 0 3px 0 0 var(--red-main), 0 6px 14px rgba(0, 0, 0, 0.85), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -2px 3px rgba(0, 0, 0, 0.5);
             font-weight: 900;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
             z-index: 5;
         }
 
@@ -624,29 +623,29 @@
             position: absolute;
             top: 0;
             right: 0;
-            width: 36px;
+            width: 28px;
             height: 100%;
             background: var(--candy-stripe-pattern);
-            border-top-right-radius: 40px;
-            border-bottom-right-radius: 40px;
+            border-top-right-radius: 30px;
+            border-bottom-right-radius: 30px;
             border-left: 2px solid rgba(0, 0, 0, 0.4);
             box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
         }
 
         #xmas-countdown-banner {
             position: relative;
-            font-size: 15px;
-            margin-top: 18px;
-            letter-spacing: 3px;
+            font-size: 12px;
+            margin-top: 12px;
+            letter-spacing: 2px;
             text-transform: uppercase;
             color: #ffffff;
             background: linear-gradient(180deg, var(--red-top) 0%, var(--red-main) 60%, var(--red-dark) 100%);
             border: 1px solid rgba(255, 255, 255, 0.25);
-            padding: 10px 32px 10px 48px;
-            border-radius: 40px;
-            box-shadow: 0 5px 0 0 var(--green-edge), 0 10px 22px rgba(0, 0, 0, 0.85), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -3px 4px rgba(0, 0, 0, 0.5);
+            padding: 7px 24px 7px 36px;
+            border-radius: 30px;
+            box-shadow: 0 3px 0 0 var(--green-edge), 0 6px 14px rgba(0, 0, 0, 0.85), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -2px 3px rgba(0, 0, 0, 0.5);
             font-weight: 900;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
             z-index: 5;
         }
 
@@ -655,11 +654,11 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 36px;
+            width: 28px;
             height: 100%;
             background: var(--candy-stripe-pattern);
-            border-top-left-radius: 40px;
-            border-bottom-left-radius: 40px;
+            border-top-left-radius: 30px;
+            border-bottom-left-radius: 30px;
             border-right: 2px solid rgba(0, 0, 0, 0.4);
             box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
         }
@@ -1101,7 +1100,7 @@
             </div>
             <div class="calendar-grid" id="calendar-days-grid" style="margin-top: 10px;"></div>
 
-            <!-- Bottom Clock Container (Swaps between Standard Clock and Christmas Neon Clock based on December) -->
+            <!-- Bottom Clock Container (Transparent / No Background Card) -->
             <div class="bottom-clock-container">
                 
                 <!-- 1. Standard Clock (Shown Jan - Nov) -->
