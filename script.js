@@ -191,6 +191,36 @@ function updateAuthUI() {
     }
 }
 
+// Helper to generate sequential slots across all configured areas
+function getGeneratedSlotsForEvent(evt) {
+    let generatedSlots = [];
+    const slotImgs = Array.isArray(evt.slotImages) ? evt.slotImages : [];
+    let globalCounter = 1;
+
+    slotImgs.forEach(s => {
+        const count = typeof s === 'object' ? parseInt(s.count || '1') : 1;
+        const areaName = typeof s === 'object' ? (s.name || 'Slot Area') : 'Slot Area';
+
+        if (count > 1) {
+            for (let i = 0; i < count; i++) {
+                generatedSlots.push(`Slot ${globalCounter} (${areaName})`);
+                globalCounter++;
+            }
+        } else {
+            generatedSlots.push(`${areaName} (Slot ${globalCounter})`);
+            globalCounter++;
+        }
+    });
+
+    if (generatedSlots.length === 0) {
+        for (let i = 1; i <= 10; i++) generatedSlots.push(`Slot ${i}`);
+        generatedSlots.push("F7 / Repair Shop Area");
+        generatedSlots.push("Non-VTC / Public Overflow");
+    }
+
+    return generatedSlots;
+}
+
 // Dynamic Slot Builder in Management Modal
 window.addSlotBuilderRow = function(name = '', url = '', count = '1') {
     const container = document.getElementById('slot-builder-container');
@@ -198,11 +228,11 @@ window.addSlotBuilderRow = function(name = '', url = '', count = '1') {
 
     const row = document.createElement('div');
     row.className = 'slot-builder-row';
-    row.style.cssText = 'display: grid; grid-template-columns: 2fr 3fr 1fr 30px; gap: 6px; align-items: center;';
+    row.style.cssText = 'display: grid; grid-template-columns: 2fr 3fr 1fr 30px; gap: 6px; align-items: center; margin-bottom: 6px;';
     row.innerHTML = `
-        <input type="text" class="slot-name-input" placeholder="Area Name (e.g. Slot 1-5)" value="${name}">
+        <input type="text" class="slot-name-input" placeholder="Area Name (e.g. F7 / Nordic)" value="${name}">
         <input type="url" class="slot-url-input" placeholder="Map Image URL" value="${url}">
-        <input type="number" class="slot-count-input" min="1" placeholder="Slots" value="${count}" title="Number of slots in this area">
+        <input type="number" class="slot-count-input" min="1" placeholder="Slots" value="${count}" title="Number of slots in this map area">
         <button type="button" class="btn btn-danger" style="padding: 6px; font-size: 12px;" onclick="this.parentElement.remove()">✕</button>
     `;
     container.appendChild(row);
@@ -222,7 +252,7 @@ window.openManagementModal = function() {
     document.getElementById('form-submit-btn').innerText = 'Publish Event';
     
     document.getElementById('slot-builder-container').innerHTML = '';
-    addSlotBuilderRow(); // Default empty row
+    addSlotBuilderRow();
 
     const modal = document.getElementById('management-modal');
     if (modal) modal.classList.add('active');
@@ -247,7 +277,6 @@ window.openEditEventModal = function() {
     document.getElementById('evt-desc').value = evt.description || '';
     document.getElementById('evt-img-url').value = evt.routeImage || '';
     
-    // Populate Slot Builder Rows
     const container = document.getElementById('slot-builder-container');
     container.innerHTML = '';
     
@@ -464,26 +493,7 @@ window.openSlotBookingModal = function() {
     const titleEl = document.getElementById('slot-modal-title');
     if (titleEl) titleEl.innerText = `🎟️ Convoy Slots: ${evt.title}`;
     
-    // Generate available slots dynamically from the structured slot maps & counts
-    let generatedSlots = [];
-    const slotImgs = Array.isArray(evt.slotImages) ? evt.slotImages : [];
-    
-    slotImgs.forEach(s => {
-        const areaName = typeof s === 'object' ? (s.name || 'Slot Area') : 'Slot Area';
-        const count = typeof s === 'object' ? parseInt(s.count || '1') : 1;
-        if (count > 1) {
-            for (let i = 1; i <= count; i++) {
-                generatedSlots.push(`${areaName} - #${i}`);
-            }
-        } else {
-            generatedSlots.push(areaName);
-        }
-    });
-
-    if (generatedSlots.length === 0) {
-        generatedSlots = ["Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", "Slot 6", "Slot 7", "Slot 8", "Slot 9", "Slot 10", "F7 / Repair Shop Area", "Non-VTC / Public Overflow"];
-    }
-
+    const generatedSlots = getGeneratedSlotsForEvent(evt);
     const bookedVtcs = Array.isArray(evt.bookedVtcs) ? evt.bookedVtcs : [];
     const bookedSlotChoices = bookedVtcs.map(b => b.slotChoice);
     const availableSlots = generatedSlots.filter(slot => !bookedSlotChoices.includes(slot));
@@ -511,6 +521,7 @@ window.openSlotBookingModal = function() {
     const container = document.getElementById('slot-maps-display-container');
     if (container) {
         container.innerHTML = '';
+        const slotImgs = Array.isArray(evt.slotImages) ? evt.slotImages : [];
         if (slotImgs.length > 0) {
             slotImgs.forEach((s, index) => {
                 const name = typeof s === 'object' ? (s.name || `Slot Area #${index + 1}`) : `Slot Area #${index + 1}`;
@@ -546,37 +557,25 @@ window.openStaffManualBookingModal = function() {
     const evt = events.find(e => e.id === activeEventId);
     if (!evt) return;
 
-    let generatedSlots = [];
-    const slotImgs = Array.isArray(evt.slotImages) ? evt.slotImages : [];
-    slotImgs.forEach(s => {
-        const areaName = typeof s === 'object' ? (s.name || 'Slot Area') : 'Slot Area';
-        const count = typeof s === 'object' ? parseInt(s.count || '1') : 1;
-        if (count > 1) {
-            for (let i = 1; i <= count; i++) generatedSlots.push(`${areaName} - #${i}`);
-        } else {
-            generatedSlots.push(areaName);
-        }
-    });
-
-    if (generatedSlots.length === 0) {
-        generatedSlots = ["Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", "Slot 6", "Slot 7", "Slot 8", "Slot 9", "Slot 10", "F7 Area", "Public Overflow"];
-    }
-
+    const generatedSlots = getGeneratedSlotsForEvent(evt);
     const bookedVtcs = Array.isArray(evt.bookedVtcs) ? evt.bookedVtcs : [];
     const bookedSlotChoices = bookedVtcs.map(b => b.slotChoice);
     const availableSlots = generatedSlots.filter(slot => !bookedSlotChoices.includes(slot));
 
     const dropdown = document.getElementById('manual-vtc-slot');
-    dropdown.innerHTML = `<option value="">-- Choose Slot to Assign --</option>`;
-    availableSlots.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s;
-        opt.innerText = s;
-        dropdown.appendChild(opt);
-    });
+    if (dropdown) {
+        dropdown.innerHTML = `<option value="">-- Choose Slot to Assign --</option>`;
+        availableSlots.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.innerText = s;
+            dropdown.appendChild(opt);
+        });
+    }
 
     closeModal('event-modal');
-    document.getElementById('staff-manual-booking-modal').classList.add('active');
+    const manualModal = document.getElementById('staff-manual-booking-modal');
+    if (manualModal) manualModal.classList.add('active');
 };
 
 window.submitStaffManualBooking = async function(e) {
@@ -728,7 +727,6 @@ window.handleEventSubmit = async function(e) {
     const editId = document.getElementById('edit-event-id').value;
     const imageUrl = document.getElementById('evt-img-url').value.trim();
     
-    // Collect Slot Builder Items into structured objects
     const slotRows = document.querySelectorAll('.slot-builder-row');
     const slotImages = [];
     slotRows.forEach(row => {
