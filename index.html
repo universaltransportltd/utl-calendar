@@ -237,6 +237,86 @@
             gap: 3px;
         }
 
+        /* Embedded Sidebar Clock Styles */
+        .sidebar-clock-box {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .sidebar-clock-header {
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--primary-blue);
+            font-weight: bold;
+        }
+
+        .sidebar-flip-clock {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sidebar-flip-card {
+            position: relative;
+            width: 32px;
+            height: 46px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary-blue);
+            background-color: var(--accent-purple);
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .sidebar-digit-inner {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sidebar-separator {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sidebar-dot {
+            width: 4px;
+            height: 4px;
+            background-color: var(--primary-blue);
+            border-radius: 50%;
+        }
+
+        #sidebar-date {
+            font-size: 11px;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #sidebar-utc-display {
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
         .calendar-section {
             display: flex;
             flex-direction: column;
@@ -646,6 +726,30 @@
     <main>
         <aside class="sidebar-overview">
             <h3>📋 All Scheduled Events <span id="event-count-badge" style="font-size: 12px; color: var(--primary-blue);">(0)</span></h3>
+            
+            <!-- Embedded Sidebar Live Clock Component -->
+            <div class="sidebar-clock-box">
+                <div class="sidebar-clock-header">Current UK Time</div>
+                <div class="sidebar-flip-clock">
+                    <div class="sidebar-flip-card" id="sb-h1"><div class="sidebar-digit-inner">0</div></div>
+                    <div class="sidebar-flip-card" id="sb-h2"><div class="sidebar-digit-inner">0</div></div>
+                    <div class="sidebar-separator">
+                        <div class="sidebar-dot"></div>
+                        <div class="sidebar-dot"></div>
+                    </div>
+                    <div class="sidebar-flip-card" id="sb-m1"><div class="sidebar-digit-inner">0</div></div>
+                    <div class="sidebar-flip-card" id="sb-m2"><div class="sidebar-digit-inner">0</div></div>
+                    <div class="sidebar-separator">
+                        <div class="sidebar-dot"></div>
+                        <div class="sidebar-dot"></div>
+                    </div>
+                    <div class="sidebar-flip-card" id="sb-s1"><div class="sidebar-digit-inner">0</div></div>
+                    <div class="sidebar-flip-card" id="sb-s2"><div class="sidebar-digit-inner">0</div></div>
+                </div>
+                <div id="sidebar-date">LOADING DATE...</div>
+                <div id="sidebar-utc-display">LOADING UTC...</div>
+            </div>
+
             <div id="sidebar-events-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
         </aside>
 
@@ -671,6 +775,39 @@
                 <div class="day-header">Sun</div>
             </div>
             <div class="calendar-grid" id="calendar-days-grid" style="margin-top: 10px;"></div>
+
+            <!-- December Christmas Countdown Banner (Appears only in December) -->
+            <div id="calendar-xmas-banner" style="display: none; margin-top: 25px; text-align: center; z-index: 5; position: relative;">
+                <div style="
+                    display: inline-block;
+                    position: relative;
+                    font-size: 14px;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    color: #ffffff;
+                    background: linear-gradient(180deg, #ff2d3d 0%, #d10a24 60%, #7e0310 100%);
+                    border: 1px solid rgba(255, 255, 255, 0.25);
+                    padding: 10px 32px 10px 48px;
+                    border-radius: 40px;
+                    box-shadow: 0 5px 0 0 #43e038, 0 10px 22px rgba(0, 0, 0, 0.85), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -3px 4px rgba(0, 0, 0, 0.5);
+                    font-weight: 900;
+                    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+                ">
+                    <span style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 36px;
+                        height: 100%;
+                        background: repeating-linear-gradient(-45deg, #d10a24, #d10a24 8px, #ffffff 8px, #ffffff 16px);
+                        border-top-left-radius: 40px;
+                        border-bottom-left-radius: 40px;
+                        border-right: 2px solid rgba(0, 0, 0, 0.4);
+                        box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
+                    "></span>
+                    <span id="calendar-xmas-countdown">LOADING COUNTDOWN...</span>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -787,7 +924,7 @@
         </div>
     </div>
 
-<!-- Management Modal (Publish / Edit) -->
+    <!-- Management Modal (Publish / Edit) -->
     <div class="modal-overlay" id="management-modal">
         <div class="modal-card">
             <div class="modal-header">
@@ -843,7 +980,7 @@
         </div>
     </div>
 
-<!-- Staff Manual Booking Modal -->
+    <!-- Staff Manual Booking Modal -->
     <div class="modal-overlay" id="staff-manual-booking-modal">
         <div class="modal-card" style="max-width: 450px;">
             <div class="modal-header">
@@ -878,5 +1015,80 @@
     
     <!-- External Script Integration -->
     <script src="script.js"></script>
+    <script>
+        // Sidebar Clock & Christmas Countdown Ticker Script
+        function updateSidebarClockAndCountdown() {
+            const now = new Date();
+
+            // UK Time format for sidebar clock
+            const ukTimeString = now.toLocaleTimeString('en-GB', { 
+                timeZone: 'Europe/London', 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+
+            const hours = ukTimeString.slice(0, 2);
+            const minutes = ukTimeString.slice(3, 5);
+            const seconds = ukTimeString.slice(6, 8);
+
+            const setSbDigit = (id, val) => {
+                const el = document.getElementById(id);
+                if (el && el.textContent !== val) el.textContent = val;
+            };
+
+            setSbDigit('sb-h1', hours[0]);
+            setSbDigit('sb-h2', hours[1]);
+            setSbDigit('sb-m1', minutes[0]);
+            setSbDigit('sb-m2', minutes[1]);
+            setSbDigit('sb-s1', seconds[0]);
+            setSbDigit('sb-s2', seconds[1]);
+
+            const dateString = now.toLocaleDateString('en-GB', { 
+                timeZone: 'Europe/London', 
+                weekday: 'short', 
+                day: 'numeric', 
+                month: 'short', 
+                year: 'numeric' 
+            });
+            const sbDate = document.getElementById('sidebar-date');
+            if (sbDate) sbDate.textContent = dateString;
+
+            const utcDateString = now.toLocaleDateString('en-GB', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: '2-digit' });
+            const utcTimeString = now.toLocaleTimeString('en-GB', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const sbUtc = document.getElementById('sidebar-utc-display');
+            if (sbUtc) sbUtc.textContent = `${utcDateString} - ${utcTimeString} UTC`;
+
+            // December Countdown calculation
+            const xmasBanner = document.getElementById('calendar-xmas-banner');
+            if (xmasBanner && xmasBanner.style.display !== 'none') {
+                const ukNowString = now.toLocaleString('en-US', { timeZone: 'Europe/London' });
+                const ukNow = new Date(ukNowString);
+                let xmasYear = ukNow.getFullYear();
+                let xmasDate = new Date(xmasYear, 11, 25);
+                if (ukNow > xmasDate && ukNow.getDate() !== 25) {
+                    xmasYear++;
+                    xmasDate = new Date(xmasYear, 11, 25);
+                }
+                const diffTime = xmasDate - ukNow;
+                const countdownElem = document.getElementById('calendar-xmas-countdown');
+                if (countdownElem) {
+                    if (ukNow.getMonth() === 11 && ukNow.getDate() === 25) {
+                        countdownElem.textContent = "🎅 MERRY CHRISTMAS! 🎄";
+                    } else {
+                        const totalMinutes = Math.floor(diffTime / (1000 * 60));
+                        const days = Math.floor(totalMinutes / (60 * 24));
+                        const hoursRem = Math.floor((totalMinutes % (60 * 24)) / 60);
+                        const minutesRem = totalMinutes % 60;
+                        countdownElem.textContent = `🎅 ${days}D ${hoursRem}H ${minutesRem}M TILL CHRISTMAS 🎄`;
+                    }
+                }
+            }
+        }
+
+        setInterval(updateSidebarClockAndCountdown, 1000);
+        updateSidebarClockAndCountdown();
+    </script>
 </body>
 </html>
