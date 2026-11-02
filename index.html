@@ -169,20 +169,23 @@
 
         main {
             flex: 1;
-            max-width: 1500px;
+            max-width: 1750px;
             width: 100%;
             margin: 0 auto;
             padding: 30px 20px;
             display: grid;
-            grid-template-columns: 320px 1fr;
+            grid-template-columns: 320px 1fr 280px;
             gap: 25px;
             position: relative;
             z-index: 2;
         }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 1400px) {
             main {
-                grid-template-columns: 1fr;
+                grid-template-columns: 320px 1fr;
+            }
+            .right-margin-panel {
+                display: none; /* Fallback for smaller screens */
             }
         }
 
@@ -237,52 +240,58 @@
             gap: 3px;
         }
 
-        /* Embedded Sidebar Clock Styles */
-        .sidebar-clock-box {
-            background-color: var(--bg-dark);
+        /* Right Margin Clock Panel Styles */
+        .right-margin-panel {
+            background-color: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px;
-            text-align: center;
+            border-radius: 10px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            margin-top: 5px;
+            gap: 15px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
         }
 
-        .sidebar-clock-header {
-            font-size: 12px;
+        .margin-clock-header {
+            font-size: 13px;
             letter-spacing: 2px;
             text-transform: uppercase;
             color: var(--primary-blue);
             font-weight: bold;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            width: 100%;
+            text-align: center;
         }
 
-        .sidebar-flip-clock {
+        .margin-flip-clock {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
 
-        .sidebar-flip-card {
+        .margin-flip-card {
             position: relative;
-            width: 32px;
-            height: 46px;
+            width: 36px;
+            height: 52px;
             font-family: 'Courier New', Courier, monospace;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
             color: var(--primary-blue);
             background-color: var(--accent-purple);
-            border-radius: 4px;
+            border-radius: 6px;
             border: 1px solid var(--border-color);
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
         }
 
-        .sidebar-digit-inner {
+        .margin-digit-inner {
             position: absolute;
             width: 100%;
             height: 100%;
@@ -291,30 +300,34 @@
             align-items: center;
         }
 
-        .sidebar-separator {
+        .margin-separator {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
         }
 
-        .sidebar-dot {
-            width: 4px;
-            height: 4px;
+        .margin-dot {
+            width: 5px;
+            height: 5px;
             background-color: var(--primary-blue);
             border-radius: 50%;
+            box-shadow: 0 0 6px var(--primary-blue);
         }
 
-        #sidebar-date {
-            font-size: 11px;
+        #margin-date {
+            font-size: 12px;
             color: var(--text-light);
             text-transform: uppercase;
             letter-spacing: 1px;
+            text-align: center;
+            font-weight: 600;
         }
 
-        #sidebar-utc-display {
-            font-size: 11px;
+        #margin-utc-display {
+            font-size: 12px;
             color: var(--text-dim);
             letter-spacing: 1px;
+            text-align: center;
         }
 
         .calendar-section {
@@ -724,35 +737,13 @@
     </header>
 
     <main>
+        <!-- Left Column: Scheduled Events Sidebar -->
         <aside class="sidebar-overview">
             <h3>📋 All Scheduled Events <span id="event-count-badge" style="font-size: 12px; color: var(--primary-blue);">(0)</span></h3>
-            
-            <!-- Embedded Sidebar Live Clock Component -->
-            <div class="sidebar-clock-box">
-                <div class="sidebar-clock-header">Current UK Time</div>
-                <div class="sidebar-flip-clock">
-                    <div class="sidebar-flip-card" id="sb-h1"><div class="sidebar-digit-inner">0</div></div>
-                    <div class="sidebar-flip-card" id="sb-h2"><div class="sidebar-digit-inner">0</div></div>
-                    <div class="sidebar-separator">
-                        <div class="sidebar-dot"></div>
-                        <div class="sidebar-dot"></div>
-                    </div>
-                    <div class="sidebar-flip-card" id="sb-m1"><div class="sidebar-digit-inner">0</div></div>
-                    <div class="sidebar-flip-card" id="sb-m2"><div class="sidebar-digit-inner">0</div></div>
-                    <div class="sidebar-separator">
-                        <div class="sidebar-dot"></div>
-                        <div class="sidebar-dot"></div>
-                    </div>
-                    <div class="sidebar-flip-card" id="sb-s1"><div class="sidebar-digit-inner">0</div></div>
-                    <div class="sidebar-flip-card" id="sb-s2"><div class="sidebar-digit-inner">0</div></div>
-                </div>
-                <div id="sidebar-date">LOADING DATE...</div>
-                <div id="sidebar-utc-display">LOADING UTC...</div>
-            </div>
-
             <div id="sidebar-events-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
         </aside>
 
+        <!-- Center Column: Calendar Section -->
         <div class="calendar-section">
             <div class="calendar-controls">
                 <div class="filter-tabs">
@@ -809,6 +800,29 @@
                 </div>
             </div>
         </div>
+
+        <!-- Right Margin Panel: Floating Live Clock Area (Matching your right green box) -->
+        <aside class="right-margin-panel">
+            <div class="margin-clock-header">Current UK Time</div>
+            <div class="margin-flip-clock">
+                <div class="margin-flip-card" id="mc-h1"><div class="margin-digit-inner">0</div></div>
+                <div class="margin-flip-card" id="mc-h2"><div class="margin-digit-inner">0</div></div>
+                <div class="margin-separator">
+                    <div class="margin-dot"></div>
+                    <div class="margin-dot"></div>
+                </div>
+                <div class="margin-flip-card" id="mc-m1"><div class="margin-digit-inner">0</div></div>
+                <div class="margin-flip-card" id="mc-m2"><div class="margin-digit-inner">0</div></div>
+                <div class="margin-separator">
+                    <div class="margin-dot"></div>
+                    <div class="margin-dot"></div>
+                </div>
+                <div class="margin-flip-card" id="mc-s1"><div class="margin-digit-inner">0</div></div>
+                <div class="margin-flip-card" id="mc-s2"><div class="margin-digit-inner">0</div></div>
+            </div>
+            <div id="margin-date">LOADING DATE...</div>
+            <div id="margin-utc-display">LOADING UTC...</div>
+        </aside>
     </main>
 
     <!-- Event Details Modal -->
@@ -1016,11 +1030,11 @@
     <!-- External Script Integration -->
     <script src="script.js"></script>
     <script>
-        // Sidebar Clock & Christmas Countdown Ticker Script
-        function updateSidebarClockAndCountdown() {
+        // Margin Clock & Christmas Countdown Ticker Script
+        function updateMarginClockAndCountdown() {
             const now = new Date();
 
-            // UK Time format for sidebar clock
+            // UK Time format for margin clock
             const ukTimeString = now.toLocaleTimeString('en-GB', { 
                 timeZone: 'Europe/London', 
                 hour12: false, 
@@ -1033,17 +1047,17 @@
             const minutes = ukTimeString.slice(3, 5);
             const seconds = ukTimeString.slice(6, 8);
 
-            const setSbDigit = (id, val) => {
+            const setMcDigit = (id, val) => {
                 const el = document.getElementById(id);
                 if (el && el.textContent !== val) el.textContent = val;
             };
 
-            setSbDigit('sb-h1', hours[0]);
-            setSbDigit('sb-h2', hours[1]);
-            setSbDigit('sb-m1', minutes[0]);
-            setSbDigit('sb-m2', minutes[1]);
-            setSbDigit('sb-s1', seconds[0]);
-            setSbDigit('sb-s2', seconds[1]);
+            setMcDigit('mc-h1', hours[0]);
+            setMcDigit('mc-h2', hours[1]);
+            setMcDigit('mc-m1', minutes[0]);
+            setMcDigit('mc-m2', minutes[1]);
+            setMcDigit('mc-s1', seconds[0]);
+            setMcDigit('mc-s2', seconds[1]);
 
             const dateString = now.toLocaleDateString('en-GB', { 
                 timeZone: 'Europe/London', 
@@ -1052,13 +1066,13 @@
                 month: 'short', 
                 year: 'numeric' 
             });
-            const sbDate = document.getElementById('sidebar-date');
-            if (sbDate) sbDate.textContent = dateString;
+            const mcDate = document.getElementById('margin-date');
+            if (mcDate) mcDate.textContent = dateString;
 
             const utcDateString = now.toLocaleDateString('en-GB', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: '2-digit' });
             const utcTimeString = now.toLocaleTimeString('en-GB', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const sbUtc = document.getElementById('sidebar-utc-display');
-            if (sbUtc) sbUtc.textContent = `${utcDateString} - ${utcTimeString} UTC`;
+            const mcUtc = document.getElementById('margin-utc-display');
+            if (mcUtc) mcUtc.textContent = `${utcDateString} - ${utcTimeString} UTC`;
 
             // December Countdown calculation
             const xmasBanner = document.getElementById('calendar-xmas-banner');
@@ -1087,8 +1101,8 @@
             }
         }
 
-        setInterval(updateSidebarClockAndCountdown, 1000);
-        updateSidebarClockAndCountdown();
+        setInterval(updateMarginClockAndCountdown, 1000);
+        updateMarginClockAndCountdown();
     </script>
 </body>
 </html>
