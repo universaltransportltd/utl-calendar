@@ -518,15 +518,13 @@ window.closeModal = function(modalId, keepActiveId = false) {
     }
 };
 
-// Allow clicking outside any modal card overlay to close it safely
-document.addEventListener('click', function(e) {
+// Allow clicking outside the modal card background overlay to close it safely
+window.addEventListener('click', function(e) {
     ['event-modal', 'slot-booking-modal', 'staff-manual-booking-modal', 'management-modal'].forEach(modalId => {
         const modal = document.getElementById(modalId);
-        if (modal && modal.classList.contains('active')) {
-            const card = modal.querySelector('.modal-card');
-            if (card && !card.contains(e.target)) {
-                closeModal(modalId);
-            }
+        // Only trigger if the click was directly on the modal background overlay, not inside the card
+        if (modal && modal === e.target) {
+            closeModal(modalId);
         }
     });
 });
@@ -1070,11 +1068,11 @@ function openEventModal(eventId) {
     if (breakdownDeclined) breakdownDeclined.innerHTML = `❌ <strong>Unable (${declinedCount}):</strong> ${formatRosterList(declinedList)}`;
 
     document.querySelectorAll('.rsvp-btn').forEach(b => b.classList.remove('active'));
-    const userRusp = userName && evt.driverRsvps ? evt.driverRsvps[userName] : null;
-    if (userRusp) {
-        if (userRusp === 'attending') document.getElementById('rsvp-yes')?.classList.add('active');
-        if (userRusp === 'unsure') document.getElementById('rsvp-maybe')?.classList.add('active');
-        if (userRusp === 'declined') document.getElementById('rsvp-no')?.classList.add('active');
+    const userRsvp = userName && evt.driverRsvps ? evt.driverRsvps[userName] : null;
+    if (userRsvp) {
+        if (userRsvp === 'attending') document.getElementById('rsvp-yes')?.classList.add('active');
+        if (userRsvp === 'unsure') document.getElementById('rsvp-maybe')?.classList.add('active');
+        if (userRsvp === 'declined') document.getElementById('rsvp-no')?.classList.add('active');
     }
 
     updateAuthUI();
