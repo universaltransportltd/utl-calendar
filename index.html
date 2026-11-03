@@ -916,17 +916,30 @@
             background: var(--bg-dark);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px 12px;
             margin-top: 15px;
         }
 
         .booked-vtc-list-card h4 {
-            font-size: 14px;
+            font-size: 13px;
             color: var(--primary-blue);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        /* Compact 2-Column Grid Layout for Booked VTCs */
+        .booked-vtcs-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        @media (max-width: 600px) {
+            .booked-vtcs-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         .booked-vtc-item {
@@ -935,23 +948,26 @@
             justify-content: space-between;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 8px 12px;
-            margin-bottom: 6px;
-            font-size: 12px;
+            border-radius: 5px;
+            padding: 4px 8px;
+            font-size: 10px;
         }
 
         .booked-vtc-info {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .booked-vtc-logo {
-            width: 24px;
-            height: 24px;
-            border-radius: 4px;
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
             object-fit: cover;
+            flex-shrink: 0;
         }
 
         .rsvp-container {
@@ -1195,8 +1211,8 @@
 
             <!-- Public Booked VTC List Section -->
             <div id="utl-booked-vtcs-container" class="booked-vtc-list-card" style="display: none;">
-                <h4>🚛 Registered & Booked VTC Slots <span id="booked-vtc-count-tag" style="font-size: 12px; color: var(--text-dim);">(0)</span></h4>
-                <div id="booked-vtcs-list-body" style="max-height: 180px; overflow-y: auto;"></div>
+                <h4>🚛 Registered & Booked VTC Slots <span id="booked-vtc-count-tag" style="font-size: 11px; color: var(--primary-blue); font-weight: 700;">(0 VTCs | 0 Drivers)</span></h4>
+                <div id="booked-vtcs-list-body" class="booked-vtcs-grid"></div>
             </div>
             
             <div style="margin-top: 25px;" id="slot-booking-action-wrapper">
@@ -1206,6 +1222,13 @@
             </div>
 
             <div style="margin-top: 15px;">
+                <!-- Restored Individual RSVP Summary Counts Bar -->
+                <div id="rsvp-summary-counts" style="display: flex; justify-content: space-around; background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; margin-bottom: 10px; font-size: 12px; font-weight: 600;">
+                    <span id="count-attending" style="color: var(--success);">✅ Attending: 0</span>
+                    <span id="count-unsure" style="color: var(--warning);">❓ Unsure: 0</span>
+                    <span id="count-declined" style="color: var(--danger);">❌ Unable: 0</span>
+                </div>
+
                 <p style="text-align: center; font-size: 13px; color: var(--text-dim); margin-bottom: 10px;" id="rsvp-status-label">Your RSVP Status</p>
                 <div class="rsvp-container">
                     <button class="rsvp-btn attending" id="rsvp-yes" onclick="setRSVP('attending')">✅ Attending</button>
