@@ -518,9 +518,8 @@ window.closeModal = function(modalId, keepActiveId = false) {
     }
 };
 
-// Safe click-outside listener that checks if the target class includes 'modal' (the dark backdrop)
 window.addEventListener('click', function(e) {
-    if (e.target && e.target.classList && e.target.classList.contains('modal')) {
+    if (e.target && e.target.classList && e.target.classList.contains('modal-overlay')) {
         closeModal(e.target.id);
     }
 });
@@ -941,14 +940,20 @@ function openEventModal(eventId) {
         return getSlotNum(a.slotChoice) - getSlotNum(b.slotChoice);
     });
 
+    // Calculate total drivers attending across all registered VTCs
+    const totalVtcDrivers = bookedVtcsList.reduce((acc, item) => {
+        const d = parseInt(item.drivers || '0', 10);
+        return acc + (isNaN(d) ? 0 : d);
+    }, 0);
+
     if (evt.type === 'utl_own') {
         if (slotBookingBtnContainer) slotBookingBtnContainer.style.display = 'block';
         if (bookedVtcsCard) bookedVtcsCard.style.display = 'block';
-        if (bookedVtcsCountTag) bookedVtcsCountTag.innerText = `(${bookedVtcsList.length})`;
+        if (bookedVtcsCountTag) bookedVtcsCountTag.innerText = `(${bookedVtcsList.length} VTCs | ${totalVtcDrivers} Drivers)`;
 
         if (bookedVtcsBody) {
             if (bookedVtcsList.length === 0) {
-                bookedVtcsBody.innerHTML = `<p style="font-size:12px; color:var(--text-dim); text-align:center; padding: 6px;">No VTCs have booked a slot yet.</p>`;
+                bookedVtcsBody.innerHTML = `<p style="font-size:12px; color:var(--text-dim); text-align:center; padding: 6px; grid-column: span 2;">No VTCs have booked a slot yet.</p>`;
             } else {
                 bookedVtcsBody.innerHTML = bookedVtcsList.map(item => {
                     const originalIndex = evt.bookedVtcs.indexOf(item);
@@ -958,11 +963,11 @@ function openEventModal(eventId) {
                             <img src="${item.vtcLogo}" class="booked-vtc-logo" onerror="this.src='https://i.imgur.com/86k1z0Z.png'">
                             <div>
                                 <a href="${item.vtcLink || '#'}" target="_blank" style="color:var(--text-light); font-weight:bold; text-decoration:none;">${item.vtcName}</a>
-                                <span style="color:var(--text-dim); font-size:11px;"> (${item.drivers || '?'} Drivers)</span>
+                                <span style="color:var(--text-dim); font-size:10px;"> (${item.drivers || '?'} Drivers)</span>
                             </div>
                         </div>
-                        <div style="font-weight:bold; color:var(--primary-blue); font-size:12px;">
-                            📍 ${item.slotChoice} ${isStaff ? `<button class="btn btn-danger" style="padding:1px 5px; font-size:10px; margin-left:6px;" onclick="removeBookedVtc(${originalIndex})">×</button>` : ''}
+                        <div style="font-weight:bold; color:var(--primary-blue); font-size:10px; white-space:nowrap;">
+                            📍 ${item.slotChoice} ${isStaff ? `<button class="btn btn-danger" style="padding:1px 4px; font-size:9px; margin-left:4px;" onclick="removeBookedVtc(${originalIndex})">×</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -1016,27 +1021,17 @@ function openEventModal(eventId) {
         });
     }
 
-    // Public RSVP counts for non-staff viewers
-    let publicRsvpSummary = document.getElementById('public-rsvp-summary-banner');
-    if (!publicRsvpSummary) {
-        publicRsvpSummary = document.createElement('div');
-        publicRsvpSummary.id = 'public-rsvp-summary-banner';
-        publicRsvpSummary.style.cssText = 'background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 12px; text-align: center; font-size: 13px; font-weight: bold; display: flex; justify-content: space-around; gap: 5px;';
-        const rsvpContainerParent = statusLabel ? statusLabel.parentElement : null;
-        if (rsvpContainerParent) {
-            rsvpContainerParent.insertBefore(publicRsvpSummary, statusLabel);
-        }
-    }
-
     const attendingCount = evt.rsvps?.attending || attendingList.length;
     const unsureCount = evt.rsvps?.unsure || unsureList.length;
     const declinedCount = evt.rsvps?.declined || declinedList.length;
 
-    publicRsvpSummary.innerHTML = `
-        <span style="color: var(--success);">✅ Attending: ${attendingCount}</span>
-        <span style="color: var(--warning);">❓ Unsure: ${unsureCount}</span>
-        <span style="color: var(--danger);">❌ Unable: ${declinedCount}</span>
-    `;
+    const countAttendingEl = document.getElementById('count-attending');
+    const countUnsureEl = document.getElementById('count-unsure');
+    const countDeclinedEl = document.getElementById('count-declined');
+
+    if (countAttendingEl) countAttendingEl.innerText = `✅ Attending: ${attendingCount}`;
+    if (countUnsureEl) countUnsureEl.innerText = `❓ Unsure: ${unsureCount}`;
+    if (countDeclinedEl) countDeclinedEl.innerText = `❌ Unable: ${declinedCount}`;
 
     const formatRosterList = (list) => {
         if (list.length === 0) return 'None';
