@@ -1,1641 +1,1620 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UTL — Universal Transport Ltd Event Calendar</title>
-    <!-- Supabase JS Library -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Orbitron:wght@800;900&display=swap');
+    :root {
+        --bg-dark: #0f0a1e;
+        --bg-card: #1c1333;
+        --bg-hover: #261a45;
+        --primary-blue: #1CC8FA;
+        --deep-purple: #3F186F;
+        --accent-purple: #2D1048;
+        --text-light: #ffffff;
+        --text-dim: #b8b2d1;
+        --border-color: #382563;
+        --success: #2ecc71;
+        --danger: #e74c3c;
+        --warning: #f1c40f;
+        --discord-blurple: #5865F2;
 
-        :root {
-            --bg-dark: #0f0a1e;
-            --bg-card: #1c1333;
-            --bg-hover: #261a45;
-            --primary-blue: #1CC8FA;
-            --deep-purple: #3F186F;
-            --accent-purple: #2D1048;
-            --text-light: #ffffff;
-            --text-dim: #b8b2d1;
-            --border-color: #382563;
-            --success: #2ecc71;
-            --danger: #e74c3c;
-            --warning: #f1c40f;
-            --discord-blurple: #5865F2;
+        /* Neon Theme variables for December clock */
+        --red-top: #ff2d3d;
+        --red-main: #d10a24;
+        --red-dark: #7e0310;
+        --green-edge: #43e038;
+        --neon-pink: #ff007f;
+        --neon-pink-glow: rgba(255, 0, 127, 0.85);
+        --neon-cyan: #00f3ff;
+        --neon-cyan-glow: rgba(0, 243, 255, 0.85);
+        --candy-stripe-pattern: repeating-linear-gradient(
+            -45deg,
+            #d10a24,
+            #d10a24 5px,
+            #ffffff 5px,
+            #ffffff 10px
+        );
+    }
 
-            /* Neon Theme variables for December clock */
-            --red-top: #ff2d3d;
-            --red-main: #d10a24;
-            --red-dark: #7e0310;
-            --green-edge: #43e038;
-            --neon-pink: #ff007f;
-            --neon-pink-glow: rgba(255, 0, 127, 0.85);
-            --neon-cyan: #00f3ff;
-            --neon-cyan-glow: rgba(0, 243, 255, 0.85);
-            --candy-stripe-pattern: repeating-linear-gradient(
-                -45deg,
-                #d10a24,
-                #d10a24 5px,
-                #ffffff 5px,
-                #ffffff 10px
-            );
-        }
+    /* December Festive Theme Overrides */
+    body.theme-december {
+        --bg-dark: #0a1812;
+        --bg-card: #132e22;
+        --bg-hover: #1c4232;
+        --primary-blue: #ffd700;
+        --deep-purple: #1b4d3e;
+        --accent-purple: #8b0000;
+        --border-color: #245e48;
+    }
 
-        /* December Festive Theme Overrides */
-        body.theme-december {
-            --bg-dark: #0a1812;
-            --bg-card: #132e22;
-            --bg-hover: #1c4232;
-            --primary-blue: #ffd700;
-            --deep-purple: #1b4d3e;
-            --accent-purple: #8b0000;
-            --border-color: #245e48;
-        }
+    body.theme-december header {
+        border-bottom: 2px solid #e74c3c;
+        background: linear-gradient(135deg, #1b4d3e, #8b0000);
+    }
 
-        body.theme-december header {
-            border-bottom: 2px solid #e74c3c;
-            background: linear-gradient(135deg, #1b4d3e, #8b0000);
-        }
+    body.theme-december .filter-tab.active, 
+    body.theme-december .filter-tab:hover {
+        background-color: #8b0000;
+        color: #ffd700;
+        border-color: #ffd700;
+    }
 
-        body.theme-december .filter-tab.active, 
-        body.theme-december .filter-tab:hover {
-            background-color: #8b0000;
-            color: #ffd700;
-            border-color: #ffd700;
-        }
+    /* Snow Overlay Canvas */
+    #snow-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 1;
+        display: none;
+    }
 
-        /* Snow Overlay Canvas */
-        #snow-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 1;
-            display: none;
-        }
+    body.theme-december #snow-canvas {
+        display: block;
+    }
 
-        body.theme-december #snow-canvas {
-            display: block;
-        }
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+    body {
+        background-color: var(--bg-dark);
+        color: var(--text-light);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        transition: background-color 0.3s ease;
+    }
 
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            transition: background-color 0.3s ease;
-        }
+    header {
+        background: linear-gradient(135deg, var(--accent-purple), var(--bg-card));
+        padding: 15px 40px;
+        border-bottom: 2px solid var(--primary-blue);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 2;
+    }
 
-        header {
-            background: linear-gradient(135deg, var(--accent-purple), var(--bg-card));
-            padding: 15px 40px;
-            border-bottom: 2px solid var(--primary-blue);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            transition: all 0.3s ease;
-            position: relative;
-            z-index: 2;
-        }
+    .header-logo {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
 
-        .header-logo {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
+    .header-logo img {
+        height: 42px;
+        object-fit: contain;
+    }
 
-        .header-logo img {
-            height: 42px;
-            object-fit: contain;
-        }
+    .header-logo span {
+        font-size: 20px;
+        font-weight: bold;
+        color: var(--primary-blue);
+        letter-spacing: 0.5px;
+    }
 
-        .header-logo span {
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--primary-blue);
-            letter-spacing: 0.5px;
-        }
+    .header-logo p {
+        font-size: 12px;
+        color: var(--text-dim);
+        padding-left: 2px;
+    }
 
-        .header-logo p {
-            font-size: 12px;
-            color: var(--text-dim);
-            padding-left: 2px;
-        }
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
 
-        .header-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
+    .btn {
+        background-color: var(--primary-blue);
+        color: var(--bg-dark);
+        border: none;
+        padding: 9px 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.1s;
+        font-size: 13px;
+    }
 
-        .btn {
-            background-color: var(--primary-blue);
-            color: var(--bg-dark);
-            border: none;
-            padding: 9px 16px;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.2s, transform 0.1s;
-            font-size: 13px;
-        }
+    .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
 
-        .btn:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
+    .btn-discord {
+        background-color: var(--discord-blurple);
+        color: #ffffff;
+    }
 
-        .btn-discord {
-            background-color: var(--discord-blurple);
-            color: #ffffff;
-        }
+    .btn-secondary {
+        background-color: var(--deep-purple);
+        color: var(--text-light);
+        border: 1px solid var(--primary-blue);
+    }
 
-        .btn-secondary {
-            background-color: var(--deep-purple);
-            color: var(--text-light);
-            border: 1px solid var(--primary-blue);
-        }
+    .btn-danger {
+        background-color: var(--danger);
+        color: #ffffff;
+    }
 
-        .btn-danger {
-            background-color: var(--danger);
-            color: #ffffff;
-        }
+    .btn-outline {
+        background-color: transparent;
+        color: var(--text-dim);
+        border: 1px solid var(--border-color);
+    }
 
-        .btn-outline {
-            background-color: transparent;
-            color: var(--text-dim);
-            border: 1px solid var(--border-color);
-        }
+    .btn-outline:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+    }
 
-        .btn-outline:hover {
-            border-color: var(--danger);
-            color: var(--danger);
-        }
+    main {
+        flex: 1;
+        max-width: 1500px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 30px 20px;
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 25px;
+        position: relative;
+        z-index: 2;
+    }
 
+    @media (max-width: 1024px) {
         main {
-            flex: 1;
-            max-width: 1500px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 30px 20px;
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            gap: 25px;
-            position: relative;
-            z-index: 2;
+            grid-template-columns: 1fr;
         }
+    }
 
-        @media (max-width: 1024px) {
-            main {
-                grid-template-columns: 1fr;
-            }
+    .sidebar-overview {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .sidebar-overview h3 {
+        font-size: 16px;
+        color: var(--primary-blue);
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .overview-event-item {
+        background-color: var(--bg-dark);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 12px;
+        cursor: pointer;
+        transition: border-color 0.2s, transform 0.1s;
+    }
+
+    .overview-event-item:hover {
+        border-color: var(--primary-blue);
+        transform: translateX(3px);
+    }
+
+    .overview-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-light);
+        margin-bottom: 5px;
+    }
+
+    .overview-meta {
+        font-size: 11px;
+        color: var(--text-dim);
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    /* Bottom Clock Container Layout */
+    .bottom-clock-container {
+        margin-top: 30px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        background: transparent;
+        border: none;
+        position: relative;
+        z-index: 5;
+    }
+
+    /* Standard Clock Styles */
+    .std-clock-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    .std-clock-header {
+        font-size: 12px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: #00d2ff;
+        margin-bottom: 8px;
+        padding: 4px 12px;
+        background: rgba(10, 3, 26, 0.85);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(0, 210, 255, 0.3);
+        border-radius: 5px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 210, 255, 0.2);
+        font-weight: 900;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+        font-family: 'Arial Black', Arial, sans-serif;
+    }
+
+    .std-flip-clock {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        filter: drop-shadow(0px 6px 14px rgba(0, 0, 0, 0.95));
+    }
+
+    .std-flip-card {
+        position: relative;
+        width: 44px;
+        height: 64px;
+        font-size: 42px;
+        font-weight: bold;
+        color: #00d2ff;
+        background-color: #1f0442;
+        border-radius: 6px;
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8), inset 0 0 6px rgba(0, 0, 0, 0.6);
+        border: 1.5px solid #0f0224;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Arial Black', Arial, sans-serif;
+    }
+
+    .std-flip-card::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: #05010a;
+        z-index: 5;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .std-digit-inner {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-in-out;
+        will-change: transform, opacity;
+    }
+
+    .std-digit-inner.slide-out { transform: translateY(-100%); opacity: 0; }
+    .std-digit-inner.slide-in { transform: translateY(100%); opacity: 0; }
+    .std-digit-inner.active { transform: translateY(0%); opacity: 1; }
+
+    .std-separator {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 10px;
+        padding: 0 1px;
+    }
+
+    .std-dot {
+        width: 5px;
+        height: 5px;
+        background-color: #00d2ff;
+        border-radius: 2px;
+        box-shadow: 0 0 6px rgba(0, 210, 255, 0.8), 2px 2px 4px rgba(0, 0, 0, 0.9);
+    }
+
+    #std-date {
+        font-size: 12px;
+        margin-top: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #ffffff;
+        background: rgba(10, 3, 26, 0.85);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 5px 14px;
+        border-radius: 5px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.9);
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+        font-weight: bold;
+        font-family: 'Arial Black', Arial, sans-serif;
+    }
+
+    #std-utc-display {
+        font-size: 11px;
+        margin-top: 8px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #00d2ff;
+        background: rgba(10, 3, 26, 0.85);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(0, 210, 255, 0.3);
+        padding: 4px 12px;
+        border-radius: 5px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 210, 255, 0.2);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+        font-weight: bold;
+        font-family: 'Arial Black', Arial, sans-serif;
+    }
+
+    /* December Christmas Neon Clock Styles */
+    .xmas-clock-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .xmas-neon-svg {
+        position: absolute;
+        pointer-events: none;
+        z-index: 12;
+        overflow: visible;
+    }
+
+    .xmas-neon-path-cyan {
+        stroke: var(--neon-cyan);
+        stroke-width: 3px;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        filter: drop-shadow(0 0 5px var(--neon-cyan-glow)) drop-shadow(0 0 10px var(--neon-cyan));
+    }
+
+    .xmas-neon-path-pink {
+        stroke: var(--neon-pink);
+        stroke-width: 3px;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        filter: drop-shadow(0 0 5px var(--neon-pink-glow)) drop-shadow(0 0 10px var(--neon-pink));
+    }
+
+    .xmas-header-wrapper {
+        position: relative;
+        margin-bottom: 14px;
+    }
+
+    .xmas-header-svg {
+        top: -6px;
+        left: -10px;
+        width: calc(100% + 20px);
+        height: calc(100% + 12px);
+    }
+
+    .xmas-clock-header {
+        position: relative;
+        font-size: 12px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: #ffffff;
+        padding: 7px 24px 7px 36px;
+        background: linear-gradient(180deg, var(--red-top) 0%, var(--red-main) 60%, var(--red-dark) 100%);
+        border-radius: 30px;
+        box-shadow: 0 3px 0 0 var(--green-edge), 0 6px 14px rgba(0, 0, 0, 0.8), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -2px 3px rgba(0, 0, 0, 0.5);
+        font-weight: 900;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        z-index: 5;
+    }
+
+    .xmas-clock-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 28px;
+        height: 100%;
+        background: var(--candy-stripe-pattern);
+        border-top-left-radius: 30px;
+        border-bottom-left-radius: 30px;
+        border-right: 2px solid rgba(0, 0, 0, 0.4);
+        box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
+    }
+
+    .xmas-flip-clock {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 2;
+    }
+
+    .xmas-flip-card {
+        position: relative;
+        width: 48px;
+        height: 70px;
+        font-family: 'Orbitron', 'Montserrat', sans-serif;
+        font-size: 46px;
+        font-weight: 900;
+        color: #ffffff;
+        border-radius: 12px;
+        background: linear-gradient(180deg, var(--red-top) 0%, var(--red-main) 60%, var(--red-dark) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 0 0 var(--green-edge), 0 8px 18px rgba(0, 0, 0, 0.85), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -3px 4px rgba(0, 0, 0, 0.6);
+        overflow: hidden !important;
+        clip-path: inset(0 0 0 0 round 12px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #xmas-h1 .xmas-stripe-cap {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 16px;
+        height: 100%;
+        background: var(--candy-stripe-pattern);
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+        border-right: 1.5px solid rgba(0, 0, 0, 0.4);
+        box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
+        z-index: 1;
+    }
+
+    #xmas-s2 .xmas-stripe-cap {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 16px;
+        height: 100%;
+        background: var(--candy-stripe-pattern);
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+        border-left: 1.5px solid rgba(0, 0, 0, 0.4);
+        box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
+        z-index: 1;
+    }
+
+    .xmas-flip-card::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: rgba(0, 0, 0, 0.65);
+        z-index: 6;
+        box-shadow: 0 1px 1px rgba(255, 255, 255, 0.35);
+        transform: translateY(-50%);
+    }
+
+    .xmas-digit-inner {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-in-out;
+        will-change: transform, opacity;
+        color: #ffffff !important;
+        text-shadow: 0 0 2px #000000, 0 1px 4px #000000, 0 2px 6px rgba(0, 0, 0, 0.9);
+        z-index: 3;
+    }
+
+    .xmas-digit-inner.slide-out { transform: translateY(-100%); opacity: 0; }
+    .xmas-digit-inner.slide-in { transform: translateY(100%); opacity: 0; }
+    .xmas-digit-inner.active { transform: translateY(0%); opacity: 1; }
+
+    .xmas-separator {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 10px;
+        padding: 0 1px;
+        z-index: 5;
+    }
+
+    .xmas-dot {
+        width: 8px;
+        height: 8px;
+        background: radial-gradient(circle at 35% 35%, #ffffff, #d10a24 70%);
+        border: 1px solid #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 0 6px var(--neon-cyan), 0 1px 3px rgba(0, 0, 0, 0.8);
+    }
+
+    .xmas-date-wrapper {
+        position: relative;
+        margin-top: 14px;
+    }
+
+    .xmas-date-svg {
+        top: -6px;
+        left: -10px;
+        width: calc(100% + 20px);
+        height: calc(100% + 12px);
+    }
+
+    #xmas-date {
+        position: relative;
+        font-size: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #ffffff;
+        background: linear-gradient(180deg, #188a52 0%, #10633a 60%, #083c22 100%);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        padding: 7px 36px 7px 24px;
+        border-radius: 30px;
+        box-shadow: 0 3px 0 0 var(--red-main), 0 6px 14px rgba(0, 0, 0, 0.85), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -2px 3px rgba(0, 0, 0, 0.5);
+        font-weight: 900;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+        z-index: 5;
+    }
+
+    #xmas-date::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 28px;
+        height: 100%;
+        background: var(--candy-stripe-pattern);
+        border-top-right-radius: 30px;
+        border-bottom-right-radius: 30px;
+        border-left: 2px solid rgba(0, 0, 0, 0.4);
+        box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
+    }
+
+    #xmas-countdown-banner {
+        position: relative;
+        font-size: 12px;
+        margin-top: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #ffffff;
+        background: linear-gradient(180deg, var(--red-top) 0%, var(--red-main) 60%, var(--red-dark) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        padding: 7px 24px 7px 36px;
+        border-radius: 30px;
+        box-shadow: 0 3px 0 0 var(--green-edge), 0 6px 14px rgba(0, 0, 0, 0.85), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -2px 3px rgba(0, 0, 0, 0.5);
+        font-weight: 900;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+        z-index: 5;
+    }
+
+    #xmas-countdown-banner::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 28px;
+        height: 100%;
+        background: var(--candy-stripe-pattern);
+        border-top-left-radius: 30px;
+        border-bottom-left-radius: 30px;
+        border-right: 2px solid rgba(0, 0, 0, 0.4);
+        box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
+    }
+
+    .calendar-section {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .calendar-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .month-display {
+        font-size: 22px;
+        font-weight: bold;
+        color: var(--text-light);
+    }
+
+    .filter-tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .filter-tab {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        color: var(--text-dim);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .filter-tab.active, .filter-tab:hover {
+        background-color: var(--deep-purple);
+        color: var(--primary-blue);
+        border-color: var(--primary-blue);
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 12px;
+    }
+
+    .day-header {
+        text-align: center;
+        font-weight: bold;
+        color: var(--text-dim);
+        padding: 10px 0;
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+
+    .calendar-cell {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        min-height: 135px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        transition: border-color 0.2s;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .calendar-cell:hover {
+        border-color: var(--primary-blue);
+    }
+
+    .calendar-cell.other-month {
+        opacity: 0.4;
+    }
+
+    .calendar-cell.today {
+        border: 2px solid var(--primary-blue);
+        background-color: rgba(28, 200, 250, 0.05);
+    }
+
+    body.theme-december .calendar-cell.today {
+        border: 2px solid #ffd700;
+        background-color: rgba(255, 215, 0, 0.08);
+    }
+
+    .calendar-cell.today .cell-number {
+        color: var(--primary-blue);
+        font-weight: 800;
+    }
+
+    .holiday-badge {
+        font-size: 10px;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-top: 2px;
+        display: inline-block;
+        text-align: center;
+    }
+    .badge-xmas { background-color: #e74c3c; color: #fff; }
+    .badge-boxing { background-color: #3498db; color: #fff; }
+    .badge-NYE { background-color: #9b59b6; color: #fff; }
+
+    .cell-number {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-dim);
+        align-self: flex-end;
+        margin-bottom: 2px;
+    }
+
+    .event-chip {
+        font-size: 11px;
+        padding: 5px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        font-weight: 500;
+        display: flex;
+        align-items: flex-start;
+        gap: 5px;
+        line-height: 1.25;
+        transition: transform 0.1s;
+    }
+
+    .event-chip:hover {
+        transform: scale(1.02);
+    }
+
+    /* ==========================================
+       SCALABLE & MOBILE-RESPONSIVE MODAL SYSTEM
+       ========================================== */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(15, 10, 30, 0.85);
+        backdrop-filter: blur(4px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease-in-out;
+        padding: 16px;
+        box-sizing: border-box;
+    }
+
+    .modal-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .modal-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--primary-blue);
+        border-radius: 12px;
+        width: 100%;
+        max-width: 650px;
+        max-height: calc(100vh - 32px);
+        display: flex;
+        flex-direction: column;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        flex-shrink: 0;
+    }
+
+    .modal-header h2 {
+        color: var(--primary-blue);
+        font-size: 1.25rem;
+        line-height: 1.3;
+        word-break: break-word;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        color: var(--text-dim);
+        font-size: 20px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    /* Scrollable body wrapper inside event modal */
+    #modal-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 4px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word;
+    }
+
+    #slot-modal-body,
+    #event-form,
+    #staff-manual-booking-form {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 4px;
+    }
+
+    /* Scrollbar styling */
+    .modal-card::-webkit-scrollbar,
+    #modal-body::-webkit-scrollbar,
+    #slot-modal-body::-webkit-scrollbar,
+    #event-form::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .modal-card::-webkit-scrollbar-thumb,
+    #modal-body::-webkit-scrollbar-thumb,
+    #slot-modal-body::-webkit-scrollbar-thumb,
+    #event-form::-webkit-scrollbar-thumb {
+        background: var(--primary-blue);
+        border-radius: 3px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 13px;
+        color: var(--text-dim);
+        margin-bottom: 5px;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+        width: 100%;
+        max-width: 100%;
+        padding: 10px;
+        background-color: var(--bg-dark);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-light);
+        font-size: 14px;
+        box-sizing: border-box;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+        border-color: var(--primary-blue);
+        outline: none;
+    }
+
+    .available-slots-banner {
+        background: rgba(28, 200, 250, 0.1);
+        border: 1px solid var(--primary-blue);
+        border-radius: 8px;
+        padding: 12px 15px;
+        margin-bottom: 18px;
+    }
+
+    .available-slots-banner h4 {
+        color: var(--primary-blue);
+        font-size: 13px;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .slot-pill-tag {
+        display: inline-block;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        color: var(--text-light);
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        margin: 2px;
+        font-weight: 600;
+    }
+
+    .booked-vtc-list-card {
+        background: var(--bg-dark);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-top: 15px;
+    }
+
+    .booked-vtc-list-card h4 {
+        font-size: 13px;
+        color: var(--primary-blue);
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* Compact 2-Column Grid Layout for Booked VTCs */
+    .booked-vtcs-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+
+    @media (max-width: 600px) {
+        .booked-vtcs-grid {
+            grid-template-columns: 1fr;
         }
+    }
 
-        .sidebar-overview {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
+    .booked-vtc-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        padding: 4px 8px;
+        font-size: 10px;
+    }
 
-        .sidebar-overview h3 {
-            font-size: 16px;
-            color: var(--primary-blue);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .booked-vtc-info {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 
-        .overview-event-item {
-            background-color: var(--bg-dark);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 12px;
-            cursor: pointer;
-            transition: border-color 0.2s, transform 0.1s;
-        }
+    .booked-vtc-logo {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
 
-        .overview-event-item:hover {
-            border-color: var(--primary-blue);
-            transform: translateX(3px);
-        }
+    .rsvp-container {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        justify-content: center;
+    }
 
-        .overview-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-light);
-            margin-bottom: 5px;
-        }
+    .rsvp-btn {
+        flex: 1;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-dark);
+        color: var(--text-light);
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
 
-        .overview-meta {
-            font-size: 11px;
-            color: var(--text-dim);
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
+    .rsvp-btn.attending.active { background: var(--success); border-color: var(--success); color: #fff; }
+    .rsvp-btn.unsure.active { background: var(--warning); border-color: var(--warning); color: #000; }
+    .rsvp-btn.declined.active { background: var(--danger); border-color: var(--danger); color: #fff; }
 
-        /* Bottom Clock Container Layout (Transparent / No Background Card) */
-        .bottom-clock-container {
-            margin-top: 30px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-            background: transparent;
-            border: none;
-            position: relative;
-            z-index: 5;
-        }
+    .staff-rsvp-breakdown {
+        margin-top: 15px;
+        background: var(--bg-dark);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 12px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
 
-        /* ==========================================
-           STANDARD CLOCK STYLES (Scaled Down & Transparent)
-           ========================================== */
-        .std-clock-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
+    .staff-rsvp-breakdown h4 {
+        color: var(--primary-blue);
+        margin-bottom: 8px;
+        font-size: 13px;
+    }
 
-        .std-clock-header {
-            font-size: 12px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: #00d2ff;
-            margin-bottom: 8px;
-            padding: 4px 12px;
-            background: rgba(10, 3, 26, 0.85);
-            backdrop-filter: blur(6px);
-            border: 1px solid rgba(0, 210, 255, 0.3);
-            border-radius: 5px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 210, 255, 0.2);
-            font-weight: 900;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
-            font-family: 'Arial Black', Arial, sans-serif;
-        }
+    .staff-rsvp-category {
+        margin-bottom: 8px;
+    }
 
-        .std-flip-clock {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            filter: drop-shadow(0px 6px 14px rgba(0, 0, 0, 0.95));
-        }
+    .rsvp-user-pill {
+        display: inline-flex;
+        align-items: center;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 2px 6px;
+        margin: 2px;
+        font-size: 11px;
+        gap: 6px;
+    }
 
-        .std-flip-card {
-            position: relative;
-            width: 44px;
-            height: 64px;
-            font-size: 42px;
-            font-weight: bold;
-            color: #00d2ff;
-            background-color: #1f0442;
-            border-radius: 6px;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8), inset 0 0 6px rgba(0, 0, 0, 0.6);
-            border: 1.5px solid #0f0224;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Arial Black', Arial, sans-serif;
-        }
+    .rsvp-user-pill button {
+        background: none;
+        border: none;
+        color: var(--danger);
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 12px;
+        padding: 0;
+    }
 
-        .std-flip-card::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background-color: #05010a;
-            z-index: 5;
-            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
-        }
+    .lightbox-card {
+        max-width: 90vw;
+        max-height: 90vh;
+        background: transparent;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
-        .std-digit-inner {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-in-out;
-            will-change: transform, opacity;
-        }
+    .lightbox-card img {
+        max-width: 100%;
+        max-height: 85vh;
+        border-radius: 8px;
+        border: 2px solid var(--primary-blue);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    }
 
-        .std-digit-inner.slide-out { transform: translateY(-100%); opacity: 0; }
-        .std-digit-inner.slide-in { transform: translateY(100%); opacity: 0; }
-        .std-digit-inner.active { transform: translateY(0%); opacity: 1; }
-
-        .std-separator {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 10px;
-            padding: 0 1px;
-        }
-
-        .std-dot {
-            width: 5px;
-            height: 5px;
-            background-color: #00d2ff;
-            border-radius: 2px;
-            box-shadow: 0 0 6px rgba(0, 210, 255, 0.8), 2px 2px 4px rgba(0, 0, 0, 0.9);
-        }
-
-        #std-date {
-            font-size: 12px;
-            margin-top: 12px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #ffffff;
-            background: rgba(10, 3, 26, 0.85);
-            backdrop-filter: blur(6px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 5px 14px;
-            border-radius: 5px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.9);
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
-            font-weight: bold;
-            font-family: 'Arial Black', Arial, sans-serif;
-        }
-
-        #std-utc-display {
-            font-size: 11px;
-            margin-top: 8px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #00d2ff;
-            background: rgba(10, 3, 26, 0.85);
-            backdrop-filter: blur(6px);
-            border: 1px solid rgba(0, 210, 255, 0.3);
-            padding: 4px 12px;
-            border-radius: 5px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 210, 255, 0.2);
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
-            font-weight: bold;
-            font-family: 'Arial Black', Arial, sans-serif;
-        }
-
-
-        /* ==========================================
-           DECEMBER XMAS CLOCK STYLES (Scaled Down & Transparent)
-           ========================================== */
-        .xmas-clock-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            font-family: 'Montserrat', sans-serif;
-        }
-
-        .xmas-neon-svg {
-            position: absolute;
-            pointer-events: none;
-            z-index: 12;
-            overflow: visible;
-        }
-
-        .xmas-neon-path-cyan {
-            stroke: var(--neon-cyan);
-            stroke-width: 3px;
-            fill: none;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            filter: drop-shadow(0 0 5px var(--neon-cyan-glow)) drop-shadow(0 0 10px var(--neon-cyan));
-        }
-
-        .xmas-neon-path-pink {
-            stroke: var(--neon-pink);
-            stroke-width: 3px;
-            fill: none;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            filter: drop-shadow(0 0 5px var(--neon-pink-glow)) drop-shadow(0 0 10px var(--neon-pink));
-        }
-
-        .xmas-header-wrapper {
-            position: relative;
-            margin-bottom: 14px;
-        }
-
-        .xmas-header-svg {
-            top: -6px;
-            left: -10px;
-            width: calc(100% + 20px);
-            height: calc(100% + 12px);
-        }
-
-        .xmas-clock-header {
-            position: relative;
-            font-size: 12px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--white-pure, #ffffff);
-            padding: 7px 24px 7px 36px;
-            background: linear-gradient(180deg, var(--red-top) 0%, var(--red-main) 60%, var(--red-dark) 100%);
-            border-radius: 30px;
-            box-shadow: 
-                0 3px 0 0 var(--green-edge),
-                0 6px 14px rgba(0, 0, 0, 0.8),
-                inset 0 2px 2px rgba(255, 255, 255, 0.6),
-                inset 0 -2px 3px rgba(0, 0, 0, 0.5);
-            font-weight: 900;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            z-index: 5;
-        }
-
-        .xmas-clock-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 28px;
-            height: 100%;
-            background: var(--candy-stripe-pattern);
-            border-top-left-radius: 30px;
-            border-bottom-left-radius: 30px;
-            border-right: 2px solid rgba(0, 0, 0, 0.4);
-            box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
-        }
-
-        .xmas-flip-clock {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            z-index: 2;
-        }
-
-        .xmas-flip-card {
-            position: relative;
-            width: 48px;
-            height: 70px;
-            font-family: 'Orbitron', 'Montserrat', sans-serif;
-            font-size: 46px;
-            font-weight: 900;
-            color: #ffffff;
-            border-radius: 12px;
-            background: linear-gradient(180deg, var(--red-top) 0%, var(--red-main) 60%, var(--red-dark) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 
-                0 4px 0 0 var(--green-edge),
-                0 8px 18px rgba(0, 0, 0, 0.85),
-                inset 0 2px 2px rgba(255, 255, 255, 0.6),
-                inset 0 -3px 4px rgba(0, 0, 0, 0.6);
-            overflow: hidden !important;
-            clip-path: inset(0 0 0 0 round 12px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #xmas-h1 .xmas-stripe-cap {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 16px;
-            height: 100%;
-            background: var(--candy-stripe-pattern);
-            border-top-left-radius: 12px;
-            border-bottom-left-radius: 12px;
-            border-right: 1.5px solid rgba(0, 0, 0, 0.4);
-            box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
-            z-index: 1;
-        }
-
-        #xmas-s2 .xmas-stripe-cap {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 16px;
-            height: 100%;
-            background: var(--candy-stripe-pattern);
-            border-top-right-radius: 12px;
-            border-bottom-right-radius: 12px;
-            border-left: 1.5px solid rgba(0, 0, 0, 0.4);
-            box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
-            z-index: 1;
-        }
-
-        .xmas-flip-card::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background-color: rgba(0, 0, 0, 0.65);
-            z-index: 6;
-            box-shadow: 0 1px 1px rgba(255, 255, 255, 0.35);
-            transform: translateY(-50%);
-        }
-
-        .xmas-digit-inner {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-in-out;
-            will-change: transform, opacity;
-            color: #ffffff !important;
-            text-shadow: 0 0 2px #000000, 0 1px 4px #000000, 0 2px 6px rgba(0, 0, 0, 0.9);
-            z-index: 3;
-        }
-
-        .xmas-digit-inner.slide-out { transform: translateY(-100%); opacity: 0; }
-        .xmas-digit-inner.slide-in { transform: translateY(100%); opacity: 0; }
-        .xmas-digit-inner.active { transform: translateY(0%); opacity: 1; }
-
-        .xmas-separator {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 10px;
-            padding: 0 1px;
-            z-index: 5;
-        }
-
-        .xmas-dot {
-            width: 8px;
-            height: 8px;
-            background: radial-gradient(circle at 35% 35%, #ffffff, #d10a24 70%);
-            border: 1px solid #ffffff;
-            border-radius: 50%;
-            box-shadow: 0 0 6px var(--neon-cyan), 0 1px 3px rgba(0, 0, 0, 0.8);
-        }
-
-        .xmas-date-wrapper {
-            position: relative;
-            margin-top: 14px;
-        }
-
-        .xmas-date-svg {
-            top: -6px;
-            left: -10px;
-            width: calc(100% + 20px);
-            height: calc(100% + 12px);
-        }
-
-        #xmas-date {
-            position: relative;
-            font-size: 12px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #ffffff;
-            background: linear-gradient(180deg, #188a52 0%, #10633a 60%, #083c22 100%);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            padding: 7px 36px 7px 24px;
-            border-radius: 30px;
-            box-shadow: 0 3px 0 0 var(--red-main), 0 6px 14px rgba(0, 0, 0, 0.85), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -2px 3px rgba(0, 0, 0, 0.5);
-            font-weight: 900;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
-            z-index: 5;
-        }
-
-        #xmas-date::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 28px;
-            height: 100%;
-            background: var(--candy-stripe-pattern);
-            border-top-right-radius: 30px;
-            border-bottom-right-radius: 30px;
-            border-left: 2px solid rgba(0, 0, 0, 0.4);
-            box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
-        }
-
-        #xmas-countdown-banner {
-            position: relative;
-            font-size: 12px;
-            margin-top: 12px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #ffffff;
-            background: linear-gradient(180deg, var(--red-top) 0%, var(--red-main) 60%, var(--red-dark) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            padding: 7px 24px 7px 36px;
-            border-radius: 30px;
-            box-shadow: 0 3px 0 0 var(--green-edge), 0 6px 14px rgba(0, 0, 0, 0.85), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -2px 3px rgba(0, 0, 0, 0.5);
-            font-weight: 900;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
-            z-index: 5;
-        }
-
-        #xmas-countdown-banner::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 28px;
-            height: 100%;
-            background: var(--candy-stripe-pattern);
-            border-top-left-radius: 30px;
-            border-bottom-left-radius: 30px;
-            border-right: 2px solid rgba(0, 0, 0, 0.4);
-            box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.6);
-        }
-
-        .calendar-section {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .calendar-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .month-display {
-            font-size: 22px;
-            font-weight: bold;
-            color: var(--text-light);
-        }
-
-        .filter-tabs {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .filter-tab {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            color: var(--text-dim);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .filter-tab.active, .filter-tab:hover {
-            background-color: var(--deep-purple);
-            color: var(--primary-blue);
-            border-color: var(--primary-blue);
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 12px;
-        }
-
-        .day-header {
-            text-align: center;
-            font-weight: bold;
-            color: var(--text-dim);
-            padding: 10px 0;
-            font-size: 14px;
-            text-transform: uppercase;
-        }
-
-        .calendar-cell {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            min-height: 135px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            transition: border-color 0.2s;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .calendar-cell:hover {
-            border-color: var(--primary-blue);
-        }
-
-        .calendar-cell.other-month {
-            opacity: 0.4;
-        }
-
-        .calendar-cell.today {
-            border: 2px solid var(--primary-blue);
-            background-color: rgba(28, 200, 250, 0.05);
-        }
-
-        body.theme-december .calendar-cell.today {
-            border: 2px solid #ffd700;
-            background-color: rgba(255, 215, 0, 0.08);
-        }
-
-        .calendar-cell.today .cell-number {
-            color: var(--primary-blue);
-            font-weight: 800;
-        }
-
-        .holiday-badge {
-            font-size: 10px;
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-top: 2px;
-            display: inline-block;
-            text-align: center;
-        }
-        .badge-xmas { background-color: #e74c3c; color: #fff; }
-        .badge-boxing { background-color: #3498db; color: #fff; }
-        .badge-NYE { background-color: #9b59b6; color: #fff; }
-
-        .cell-number {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-dim);
-            align-self: flex-end;
-            margin-bottom: 2px;
-        }
-
-        .event-chip {
-            font-size: 11px;
-            padding: 5px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            white-space: normal;
-            word-break: break-word;
-            overflow-wrap: break-word;
-            font-weight: 500;
-            display: flex;
-            align-items: flex-start;
-            gap: 5px;
-            line-height: 1.25;
-            transition: transform 0.1s;
-        }
-
-        .event-chip:hover {
-            transform: scale(1.02);
-        }
-
-        /* ==========================================
-           SCALABLE & MOBILE-RESPONSIVE MODALS
-           ========================================== */
+    /* Mobile Adjustments */
+    @media (max-width: 600px) {
         .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(15, 10, 30, 0.85);
-            backdrop-filter: blur(4px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.25s ease-in-out;
-            padding: 16px;
-            box-sizing: border-box;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
+            padding: 10px;
         }
 
         .modal-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--primary-blue);
-            border-radius: 12px;
-            width: 100%;
-            max-width: 650px;
-            max-height: calc(100vh - 32px);
-            display: flex;
-            flex-direction: column;
-            padding: 24px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            flex-shrink: 0;
+            padding: 16px;
+            max-height: calc(100vh - 20px);
+            border-radius: 10px;
         }
 
         .modal-header h2 {
-            color: var(--primary-blue);
-            font-size: 1.25rem;
-            line-height: 1.3;
-            word-break: break-word;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            color: var(--text-dim);
-            font-size: 20px;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        /* Scrollable body sections inside modals */
-        #modal-body,
-        #slot-modal-body,
-        #event-form,
-        #staff-manual-booking-form {
-            flex: 1 1 auto;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding-right: 4px;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            word-break: break-word;
-        }
-
-        /* Modal custom scrollbars */
-        #modal-body::-webkit-scrollbar,
-        #slot-modal-body::-webkit-scrollbar,
-        #event-form::-webkit-scrollbar,
-        .modal-card::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        #modal-body::-webkit-scrollbar-thumb,
-        #slot-modal-body::-webkit-scrollbar-thumb,
-        #event-form::-webkit-scrollbar-thumb,
-        .modal-card::-webkit-scrollbar-thumb {
-            background: var(--primary-blue);
-            border-radius: 3px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            color: var(--text-dim);
-            margin-bottom: 5px;
-        }
-
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            max-width: 100%;
-            padding: 10px;
-            background-color: var(--bg-dark);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            color: var(--text-light);
-            font-size: 14px;
-            box-sizing: border-box;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            border-color: var(--primary-blue);
-            outline: none;
-        }
-
-        .available-slots-banner {
-            background: rgba(28, 200, 250, 0.1);
-            border: 1px solid var(--primary-blue);
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 18px;
-        }
-
-        .available-slots-banner h4 {
-            color: var(--primary-blue);
-            font-size: 13px;
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .slot-pill-tag {
-            display: inline-block;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            color: var(--text-light);
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            margin: 2px;
-            font-weight: 600;
-        }
-
-        .booked-vtc-list-card {
-            background: var(--bg-dark);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px 12px;
-            margin-top: 15px;
-        }
-
-        .booked-vtc-list-card h4 {
-            font-size: 13px;
-            color: var(--primary-blue);
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* Compact 2-Column Grid Layout for Booked VTCs */
-        .booked-vtcs-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 6px;
-        }
-
-        .booked-vtc-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            padding: 4px 8px;
-            font-size: 10px;
-        }
-
-        .booked-vtc-info {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .booked-vtc-logo {
-            width: 16px;
-            height: 16px;
-            border-radius: 3px;
-            object-fit: cover;
-            flex-shrink: 0;
+            font-size: 1.1rem;
         }
 
         .rsvp-container {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            justify-content: center;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .rsvp-btn {
-            flex: 1;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-dark);
-            color: var(--text-light);
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
+            width: 100%;
         }
+    }
+</style>
 
-        .rsvp-btn.attending.active { background: var(--success); border-color: var(--success); color: #fff; }
-        .rsvp-btn.unsure.active { background: var(--warning); border-color: var(--warning); color: #000; }
-        .rsvp-btn.declined.active { background: var(--danger); border-color: var(--danger); color: #fff; }
 
-        .staff-rsvp-breakdown {
-            margin-top: 15px;
-            background: var(--bg-dark);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 12px;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
+<canvas id="snow-canvas"></canvas>
 
-        .staff-rsvp-breakdown h4 {
-            color: var(--primary-blue);
-            margin-bottom: 8px;
-            font-size: 13px;
-        }
+<header>
+    <div class="header-logo">
+        <img src="UTL3DLong.jpg" alt="Universal Transport Ltd Logo" onerror="this.style.display='none'; document.getElementById('fallback-title').style.display='block';">
+        <span id="fallback-title" style="display:none;">UNIVERSAL TRANSPORT LTD</span>
+        <p>Interactive VTC Event & Convoy Calendar</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-discord" id="discord-login-btn" onclick="loginWithDiscord()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 5px;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.093.252-.19.372-.287a.075.075 0 0 1 .078-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .079.009c.12.098.245.195.372.288a.077.077 0 0 1-.006.128 12.299 12.299 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            <span id="discord-btn-text">Login with Discord</span>
+        </button>
 
-        .staff-rsvp-category {
-            margin-bottom: 8px;
-        }
+        <button class="btn btn-secondary" onclick="prevMonth()">◀ Prev</button>
+        <span id="current-month-label" class="month-display" style="font-size: 16px;">October 2026</span>
+        <button class="btn btn-secondary" onclick="nextMonth()">Next ▶</button>
 
-        .rsvp-user-pill {
-            display: inline-flex;
-            align-items: center;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 2px 6px;
-            margin: 2px;
-            font-size: 11px;
-            gap: 6px;
-        }
+        <button class="btn" id="management-btn" onclick="openManagementModal()">⚙️ Management Panel</button>
+        <button class="btn btn-outline" id="staff-logout-btn" style="display: none;" onclick="logoutDiscord()">Log Out</button>
+    </div>
+</header>
 
-        .rsvp-user-pill button {
-            background: none;
-            border: none;
-            color: var(--danger);
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 12px;
-            padding: 0;
-        }
+<main>
+    <!-- Left Column: Scheduled Events Sidebar -->
+    <aside class="sidebar-overview">
+        <h3>📋 All Scheduled Events <span id="event-count-badge" style="font-size: 12px; color: var(--primary-blue);">(0)</span></h3>
+        <div id="sidebar-events-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+    </aside>
 
-        .lightbox-card {
-            max-width: 90vw;
-            max-height: 90vh;
-            background: transparent;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .lightbox-card img {
-            max-width: 100%;
-            max-height: 85vh;
-            border-radius: 8px;
-            border: 2px solid var(--primary-blue);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        }
-
-        #modal-body {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            word-break: break-word;
-        }
-
-        /* Mobile Adaptations */
-        @media (max-width: 600px) {
-            .modal-overlay {
-                padding: 10px;
-            }
-
-            .modal-card {
-                padding: 16px;
-                max-height: calc(100vh - 20px);
-                border-radius: 10px;
-            }
-
-            .modal-header h2 {
-                font-size: 1.1rem;
-            }
-
-            .booked-vtcs-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .rsvp-container {
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .rsvp-btn {
-                width: 100%;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <canvas id="snow-canvas"></canvas>
-
-    <header>
-        <div class="header-logo">
-            <img src="UTL3DLong.jpg" alt="Universal Transport Ltd Logo" onerror="this.style.display='none'; document.getElementById('fallback-title').style.display='block';">
-            <span id="fallback-title" style="display:none;">UNIVERSAL TRANSPORT LTD</span>
-            <p>Interactive VTC Event & Convoy Calendar</p>
-        </div>
-        <div class="header-actions">
-            <button class="btn btn-discord" id="discord-login-btn" onclick="loginWithDiscord()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 5px;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.093.252-.19.372-.287a.075.075 0 0 1 .078-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .079.009c.12.098.245.195.372.288a.077.077 0 0 1-.006.128 12.299 12.299 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-                <span id="discord-btn-text">Login with Discord</span>
-            </button>
-
-            <button class="btn btn-secondary" onclick="prevMonth()">◀ Prev</button>
-            <span id="current-month-label" class="month-display" style="font-size: 16px;">October 2026</span>
-            <button class="btn btn-secondary" onclick="nextMonth()">Next ▶</button>
-
-            <button class="btn" id="management-btn" onclick="openManagementModal()">⚙️ Management Panel</button>
-            <button class="btn btn-outline" id="staff-logout-btn" style="display: none;" onclick="logoutDiscord()">Log Out</button>
-        </div>
-    </header>
-
-    <main>
-        <!-- Left Column: Scheduled Events Sidebar -->
-        <aside class="sidebar-overview">
-            <h3>📋 All Scheduled Events <span id="event-count-badge" style="font-size: 12px; color: var(--primary-blue);">(0)</span></h3>
-            <div id="sidebar-events-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
-        </aside>
-
-        <!-- Center Column: Calendar Section -->
-        <div class="calendar-section">
-            <div class="calendar-controls">
-                <div class="filter-tabs">
-                    <button class="filter-tab active" onclick="filterEvents('all', event)">All Events</button>
-                    <button class="filter-tab" onclick="filterEvents('truckfest', event)">🎪 Truckfest</button>
-                    <button class="filter-tab" onclick="filterEvents('convoy', event)">🚛 Convoys</button>
-                    <button class="filter-tab" onclick="filterEvents('charity', event)">❤️ Charity</button>
-                    <button class="filter-tab" onclick="filterEvents('utl_own', event)">🌟 UTL Exclusive</button>
-                    <button class="filter-tab" onclick="filterEvents('custom_vtc', event)">🎨 Custom VTC</button>
-                </div>
-            </div>
-
-            <div class="calendar-grid" id="calendar-header-grid">
-                <div class="day-header">Mon</div>
-                <div class="day-header">Tue</div>
-                <div class="day-header">Wed</div>
-                <div class="day-header">Thu</div>
-                <div class="day-header">Fri</div>
-                <div class="day-header">Sat</div>
-                <div class="day-header">Sun</div>
-            </div>
-            <div class="calendar-grid" id="calendar-days-grid" style="margin-top: 10px;"></div>
-
-            <!-- Bottom Clock Container (Transparent / No Background Card) -->
-            <div class="bottom-clock-container">
-                
-                <!-- 1. Standard Clock (Shown Jan - Nov) -->
-                <div id="std-clock-view" class="std-clock-wrapper">
-                    <div class="std-clock-header">Current UK</div>
-                    <div class="std-flip-clock">
-                        <div class="std-flip-card" id="h1"><div class="std-digit-inner active">0</div></div>
-                        <div class="std-flip-card" id="h2"><div class="std-digit-inner active">0</div></div>
-                        <div class="std-separator">
-                            <div class="std-dot"></div>
-                            <div class="std-dot"></div>
-                        </div>
-                        <div class="std-flip-card" id="m1"><div class="std-digit-inner active">0</div></div>
-                        <div class="std-flip-card" id="m2"><div class="std-digit-inner active">0</div></div>
-                        <div class="std-separator">
-                            <div class="std-dot"></div>
-                            <div class="std-dot"></div>
-                        </div>
-                        <div class="std-flip-card" id="s1"><div class="std-digit-inner active">0</div></div>
-                        <div class="std-flip-card" id="s2"><div class="std-digit-inner active">0</div></div>
-                    </div>
-                    <div id="std-date">LOADING DATE...</div>
-                    <div id="std-utc-display">LOADING UTC...</div>
-                </div>
-
-                <!-- 2. December Christmas Neon Clock (Shown only in December) -->
-                <div id="xmas-clock-view" class="xmas-clock-wrapper" style="display: none;">
-                    <div class="xmas-header-wrapper">
-                        <svg class="xmas-neon-svg xmas-header-svg" viewBox="0 0 260 60" preserveAspectRatio="none">
-                            <path class="xmas-neon-path-pink" d="M -5,12 C 30,-5 80,65 140,50 C 200,35 240,65 265,48" />
-                            <path class="xmas-neon-path-cyan" d="M -5,48 C 25,65 70,-5 130,10 C 190,25 235,-5 265,12" />
-                        </svg>
-                        <div class="xmas-clock-header">Current UK Time</div>
-                    </div>
-
-                    <div class="xmas-flip-clock">
-                        <div class="xmas-flip-card" id="xmas-h1">
-                            <div class="xmas-stripe-cap"></div>
-                            <div class="xmas-digit-inner active">0</div>
-                        </div>
-                        <div class="xmas-flip-card" id="xmas-h2">
-                            <div class="xmas-digit-inner active">0</div>
-                        </div>
-                        <div class="xmas-separator">
-                            <div class="xmas-dot"></div>
-                            <div class="xmas-dot"></div>
-                        </div>
-                        <div class="xmas-flip-card" id="xmas-m1">
-                            <div class="xmas-digit-inner active">0</div>
-                        </div>
-                        <div class="xmas-flip-card" id="xmas-m2">
-                            <div class="xmas-digit-inner active">0</div>
-                        </div>
-                        <div class="xmas-separator">
-                            <div class="xmas-dot"></div>
-                            <div class="xmas-dot"></div>
-                        </div>
-                        <div class="xmas-flip-card" id="xmas-s1">
-                            <div class="xmas-digit-inner active">0</div>
-                        </div>
-                        <div class="xmas-flip-card" id="xmas-s2">
-                            <div class="xmas-stripe-cap"></div>
-                            <div class="xmas-digit-inner active">0</div>
-                        </div>
-                    </div>
-
-                    <div class="xmas-date-wrapper">
-                        <svg class="xmas-neon-svg xmas-date-svg" viewBox="0 0 320 60" preserveAspectRatio="none">
-                            <path class="xmas-neon-path-pink" d="M -5,50 C 30,65 90,-5 160,10 C 230,25 285,-5 325,15" />
-                            <path class="xmas-neon-path-cyan" d="M -5,10 C 35,-5 85,65 155,50 C 225,35 280,65 325,45" />
-                        </svg>
-                        <div id="xmas-date">LOADING UK DATE...</div>
-                    </div>
-
-                    <div id="xmas-countdown-banner">
-                        <span id="xmas-countdown">LOADING COUNTDOWN...</span>
-                    </div>
-                </div>
-
+    <!-- Center Column: Calendar Section -->
+    <div class="calendar-section">
+        <div class="calendar-controls">
+            <div class="filter-tabs">
+                <button class="filter-tab active" onclick="filterEvents('all', event)">All Events</button>
+                <button class="filter-tab" onclick="filterEvents('truckfest', event)">🎪 Truckfest</button>
+                <button class="filter-tab" onclick="filterEvents('convoy', event)">🚛 Convoys</button>
+                <button class="filter-tab" onclick="filterEvents('charity', event)">❤️ Charity</button>
+                <button class="filter-tab" onclick="filterEvents('utl_own', event)">🌟 UTL Exclusive</button>
+                <button class="filter-tab" onclick="filterEvents('custom_vtc', event)">🎨 Custom VTC</button>
             </div>
         </div>
-    </main>
 
-    <!-- Event Details Modal -->
-    <div class="modal-overlay" id="event-modal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h2 id="modal-title">Event Title</h2>
-                <button class="close-btn" onclick="closeModal('event-modal')">×</button>
-            </div>
-            <div id="modal-body">
-                <!-- Public Booked VTC List Section -->
-                <div id="utl-booked-vtcs-container" class="booked-vtc-list-card" style="display: none;">
-                    <h4>🚛 Registered & Booked VTC Slots <span id="booked-vtc-count-tag" style="font-size: 11px; color: var(--primary-blue); font-weight: 700;">(0 VTCs | 0 Drivers)</span></h4>
-                    <div id="booked-vtcs-list-body" class="booked-vtcs-grid"></div>
-                </div>
-                
-                <div style="margin-top: 25px;" id="slot-booking-action-wrapper">
-                    <div id="utl-slot-booking-btn-container" style="margin-bottom: 15px; display: none;">
-                        <button class="btn btn-discord" style="width: 100%; background: var(--primary-blue); color: var(--bg-dark); font-weight: bold;" onclick="openSlotBookingModal()">🎟️ Book Convoy Slots (VTC Representative)</button>
+        <div class="calendar-grid" id="calendar-header-grid">
+            <div class="day-header">Mon</div>
+            <div class="day-header">Tue</div>
+            <div class="day-header">Wed</div>
+            <div class="day-header">Thu</div>
+            <div class="day-header">Fri</div>
+            <div class="day-header">Sat</div>
+            <div class="day-header">Sun</div>
+        </div>
+        <div class="calendar-grid" id="calendar-days-grid" style="margin-top: 10px;"></div>
+
+        <!-- Bottom Clock Container -->
+        <div class="bottom-clock-container">
+            
+            <!-- 1. Standard Clock (Shown Jan - Nov) -->
+            <div id="std-clock-view" class="std-clock-wrapper">
+                <div class="std-clock-header">Current UK</div>
+                <div class="std-flip-clock">
+                    <div class="std-flip-card" id="h1"><div class="std-digit-inner active">0</div></div>
+                    <div class="std-flip-card" id="h2"><div class="std-digit-inner active">0</div></div>
+                    <div class="std-separator">
+                        <div class="std-dot"></div>
+                        <div class="std-dot"></div>
                     </div>
+                    <div class="std-flip-card" id="m1"><div class="std-digit-inner active">0</div></div>
+                    <div class="std-flip-card" id="m2"><div class="std-digit-inner active">0</div></div>
+                    <div class="std-separator">
+                        <div class="std-dot"></div>
+                        <div class="std-dot"></div>
+                    </div>
+                    <div class="std-flip-card" id="s1"><div class="std-digit-inner active">0</div></div>
+                    <div class="std-flip-card" id="s2"><div class="std-digit-inner active">0</div></div>
+                </div>
+                <div id="std-date">LOADING DATE...</div>
+                <div id="std-utc-display">LOADING UTC...</div>
+            </div>
+
+            <!-- 2. December Christmas Neon Clock -->
+            <div id="xmas-clock-view" class="xmas-clock-wrapper" style="display: none;">
+                <div class="xmas-header-wrapper">
+                    <svg class="xmas-neon-svg xmas-header-svg" viewBox="0 0 260 60" preserveAspectRatio="none">
+                        <path class="xmas-neon-path-pink" d="M -5,12 C 30,-5 80,65 140,50 C 200,35 240,65 265,48" />
+                        <path class="xmas-neon-path-cyan" d="M -5,48 C 25,65 70,-5 130,10 C 190,25 235,-5 265,12" />
+                    </svg>
+                    <div class="xmas-clock-header">Current UK Time</div>
+                </div>
+
+                <div class="xmas-flip-clock">
+                    <div class="xmas-flip-card" id="xmas-h1">
+                        <div class="xmas-stripe-cap"></div>
+                        <div class="xmas-digit-inner active">0</div>
+                    </div>
+                    <div class="xmas-flip-card" id="xmas-h2">
+                        <div class="xmas-digit-inner active">0</div>
+                    </div>
+                    <div class="xmas-separator">
+                        <div class="xmas-dot"></div>
+                        <div class="xmas-dot"></div>
+                    </div>
+                    <div class="xmas-flip-card" id="xmas-m1">
+                        <div class="xmas-digit-inner active">0</div>
+                    </div>
+                    <div class="xmas-flip-card" id="xmas-m2">
+                        <div class="xmas-digit-inner active">0</div>
+                    </div>
+                    <div class="xmas-separator">
+                        <div class="xmas-dot"></div>
+                        <div class="xmas-dot"></div>
+                    </div>
+                    <div class="xmas-flip-card" id="xmas-s1">
+                        <div class="xmas-digit-inner active">0</div>
+                    </div>
+                    <div class="xmas-flip-card" id="xmas-s2">
+                        <div class="xmas-stripe-cap"></div>
+                        <div class="xmas-digit-inner active">0</div>
+                    </div>
+                </div>
+
+                <div class="xmas-date-wrapper">
+                    <svg class="xmas-neon-svg xmas-date-svg" viewBox="0 0 320 60" preserveAspectRatio="none">
+                        <path class="xmas-neon-path-pink" d="M -5,50 C 30,65 90,-5 160,10 C 230,25 285,-5 325,15" />
+                        <path class="xmas-neon-path-cyan" d="M -5,10 C 35,-5 85,65 155,50 C 225,35 280,65 325,45" />
+                    </svg>
+                    <div id="xmas-date">LOADING UK DATE...</div>
+                </div>
+
+                <div id="xmas-countdown-banner">
+                    <span id="xmas-countdown">LOADING COUNTDOWN...</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<!-- Event Details Modal -->
+<div class="modal-overlay" id="event-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2 id="modal-title">Event Title</h2>
+            <button class="close-btn" onclick="closeModal('event-modal')">×</button>
+        </div>
+        
+        <div id="modal-body">
+            <!-- Dynamic Event Details Inserted Here -->
+            
+            <!-- Public Booked VTC List Section -->
+            <div id="utl-booked-vtcs-container" class="booked-vtc-list-card" style="display: none;">
+                <h4>🚛 Registered & Booked VTC Slots <span id="booked-vtc-count-tag" style="font-size: 11px; color: var(--primary-blue); font-weight: 700;">(0 VTCs | 0 Drivers)</span></h4>
+                <div id="booked-vtcs-list-body" class="booked-vtcs-grid"></div>
+            </div>
+            
+            <div style="margin-top: 25px;" id="slot-booking-action-wrapper">
+                <div id="utl-slot-booking-btn-container" style="margin-bottom: 15px; display: none;">
+                    <button class="btn btn-discord" style="width: 100%; background: var(--primary-blue); color: var(--bg-dark); font-weight: bold;" onclick="openSlotBookingModal()">🎟️ Book Convoy Slots (VTC Representative)</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <!-- Restored Individual RSVP Summary Counts Bar -->
+                <div id="rsvp-summary-counts" style="display: flex; justify-content: space-around; background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; margin-bottom: 10px; font-size: 12px; font-weight: 600;">
+                    <span id="count-attending" style="color: var(--success);">✅ Attending: 0</span>
+                    <span id="count-unsure" style="color: var(--warning);">❓ Unsure: 0</span>
+                    <span id="count-declined" style="color: var(--danger);">❌ Unable: 0</span>
+                </div>
+
+                <p style="text-align: center; font-size: 13px; color: var(--text-dim); margin-bottom: 10px;" id="rsvp-status-label">Your RSVP Status</p>
+                <div class="rsvp-container">
+                    <button class="rsvp-btn attending" id="rsvp-yes" onclick="setRSVP('attending')">✅ Attending</button>
+                    <button class="rsvp-btn unsure" id="rsvp-maybe" onclick="setRSVP('unsure')">❓ Unsure</button>
+                    <button class="rsvp-btn declined" id="rsvp-no" onclick="setRSVP('declined')">❌ Unable</button>
+                </div>
+
+                <!-- Staff Detailed Name Breakdown & Editor -->
+                <div id="staff-rsvp-breakdown-box" class="staff-rsvp-breakdown" style="display: none;">
+                    <h4>👥 Staff Roster View & Booking Management</h4>
+                    <div class="staff-rsvp-category" id="breakdown-vtcs">🚛 <strong>Booked VTCs:</strong> None</div>
+                    <div class="staff-rsvp-category" id="breakdown-attending">✅ <strong>Attending:</strong> None</div>
+                    <div class="staff-rsvp-category" id="breakdown-unsure">❓ <strong>Unsure:</strong> None</div>
+                    <div class="staff-rsvp-category" id="breakdown-declined">❌ <strong>Unable:</strong> None</div>
                 </div>
 
                 <div style="margin-top: 15px;">
-                    <!-- Restored Individual RSVP Summary Counts Bar -->
-                    <div id="rsvp-summary-counts" style="display: flex; justify-content: space-around; background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; margin-bottom: 10px; font-size: 12px; font-weight: 600;">
-                        <span id="count-attending" style="color: var(--success);">✅ Attending: 0</span>
-                        <span id="count-unsure" style="color: var(--warning);">❓ Unsure: 0</span>
-                        <span id="count-declined" style="color: var(--danger);">❌ Unable: 0</span>
-                    </div>
+                    <button class="btn btn-secondary" style="width: 100%; border-color: var(--primary-blue);" onclick="triggerDiscordReminder()">🔔 Set Discord Event Reminder</button>
+                </div>
 
-                    <p style="text-align: center; font-size: 13px; color: var(--text-dim); margin-bottom: 10px;" id="rsvp-status-label">Your RSVP Status</p>
-                    <div class="rsvp-container">
-                        <button class="rsvp-btn attending" id="rsvp-yes" onclick="setRSVP('attending')">✅ Attending</button>
-                        <button class="rsvp-btn unsure" id="rsvp-maybe" onclick="setRSVP('unsure')">❓ Unsure</button>
-                        <button class="rsvp-btn declined" id="rsvp-no" onclick="setRSVP('declined')">❌ Unable</button>
-                    </div>
-
-                    <!-- Staff Detailed Name Breakdown & Editor -->
-                    <div id="staff-rsvp-breakdown-box" class="staff-rsvp-breakdown" style="display: none;">
-                        <h4>👥 Staff Roster View & Booking Management</h4>
-                        <div class="staff-rsvp-category" id="breakdown-vtcs">🚛 <strong>Booked VTCs:</strong> None</div>
-                        <div class="staff-rsvp-category" id="breakdown-attending">✅ <strong>Attending:</strong> None</div>
-                        <div class="staff-rsvp-category" id="breakdown-unsure">❓ <strong>Unsure:</strong> None</div>
-                        <div class="staff-rsvp-category" id="breakdown-declined">❌ <strong>Unable:</strong> None</div>
-                    </div>
-
-                    <div style="margin-top: 15px;">
-                        <button class="btn btn-secondary" style="width: 100%; border-color: var(--primary-blue);" onclick="triggerDiscordReminder()">🔔 Set Discord Event Reminder</button>
-                    </div>
-
-                    <div id="staff-actions-container" style="margin-top: 15px; display: none; gap: 10px;">
-                        <button class="btn btn-secondary" style="flex: 1; border-color: var(--primary-blue);" onclick="openEditEventModal()">✏️ Edit Event</button>
-                        <button class="btn btn-danger" style="flex: 1;" onclick="deleteCurrentEvent()">🗑️ Delete Event</button>
-                    </div>
+                <div id="staff-actions-container" style="margin-top: 15px; display: none; gap: 10px;">
+                    <button class="btn btn-secondary" style="flex: 1; border-color: var(--primary-blue);" onclick="openEditEventModal()">✏️ Edit Event</button>
+                    <button class="btn btn-danger" style="flex: 1;" onclick="deleteCurrentEvent()">🗑️ Delete Event</button>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- VTC Slot Booking Modal -->
-    <div class="modal-overlay" id="slot-booking-modal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h2 id="slot-modal-title">🎟️ UTL Convoy Slot Booking</h2>
-                <button class="close-btn" onclick="closeModal('slot-booking-modal')">×</button>
-            </div>
-            <div id="slot-modal-body">
-                <!-- TOP BANNER: Available Slots Breakdown -->
-                <div class="available-slots-banner">
-                    <h4>🟢 Available Unreserved Slots</h4>
-                    <div id="available-slots-list-body" style="margin-top: 6px;"></div>
-                </div>
-
-                <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Review the route & slot area maps below, pick your slot from the dropdown list, and enter your company details.</p>
-                
-                <div id="slot-maps-display-container"></div>
-
-                <form id="slot-booking-form" onsubmit="submitSlotBooking(event)" style="margin-top: 20px;">
-                    <div class="form-group">
-                        <label>VTC Company Name *</label>
-                        <input type="text" id="slot-vtc-name" required placeholder="e.g. Universal Transport Ltd">
-                    </div>
-                    <div class="form-group">
-                        <label>VTC Logo Image URL *</label>
-                        <input type="url" id="slot-vtc-logo" required placeholder="https://imghippo.com/logo.png">
-                    </div>
-                    <div class="form-group">
-                        <label>VTC HaulMP Page Link *</label>
-                        <input type="url" id="slot-vtc-link" required placeholder="HaulMP or TMP Link">
-                    </div>
-                    <div class="form-group">
-                        <label>Select Preferred Slot *</label>
-                        <select id="slot-vtc-choice" required>
-                            <option value="">-- Choose an Available Slot --</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Estimation of Drivers Attending *</label>
-                        <input type="number" id="slot-vtc-drivers" min="1" required placeholder="10">
-                    </div>
-                    <div class="form-group">
-                        <label>Discord Username *</label>
-                        <input type="text" id="slot-vtc-discord" required placeholder="Username">
-                    </div>
-                    <div class="form-group">
-                        <label>Position In Your VTC *</label>
-                        <input type="text" id="slot-vtc-position" required placeholder="e.g. Owner / Event Manager">
-                    </div>
-                    <button type="submit" class="btn" style="width: 100%; margin-top: 10px; background: var(--primary-blue); color: var(--bg-dark);">Submit Slot Booking</button>
-                </form>
-            </div>
+<!-- VTC Slot Booking Modal -->
+<div class="modal-overlay" id="slot-booking-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2 id="slot-modal-title">🎟️ UTL Convoy Slot Booking</h2>
+            <button class="close-btn" onclick="closeModal('slot-booking-modal')">×</button>
         </div>
-    </div>
-
-    <!-- Lightbox Modal -->
-    <div class="modal-overlay" id="lightbox-modal" onclick="closeModal('lightbox-modal')">
-        <div class="lightbox-card">
-            <img id="lightbox-img" src="" alt="Enlarged Route Map">
-        </div>
-    </div>
-
-    <!-- Management Modal (Publish / Edit) -->
-    <div class="modal-overlay" id="management-modal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h2 id="management-modal-title">⚙️ Events Team Control Panel</h2>
-                <button class="close-btn" onclick="closeModal('management-modal')">×</button>
+        <div id="slot-modal-body">
+            
+            <!-- TOP BANNER: Available Slots Breakdown -->
+            <div class="available-slots-banner">
+                <h4>🟢 Available Unreserved Slots</h4>
+                <div id="available-slots-list-body" style="margin-top: 6px;"></div>
             </div>
-            <form id="event-form" onsubmit="handleEventSubmit(event)">
-                <input type="hidden" id="edit-event-id">
+
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Review the route & slot area maps below, pick your slot from the dropdown list, and enter your company details.</p>
+            
+            <div id="slot-maps-display-container"></div>
+
+            <form id="slot-booking-form" onsubmit="submitSlotBooking(event)" style="margin-top: 20px;">
                 <div class="form-group">
-                    <label>Event Title</label>
-                    <input type="text" id="evt-title" required placeholder="e.g. Alpine Night Run">
+                    <label>VTC Company Name *</label>
+                    <input type="text" id="slot-vtc-name" required placeholder="e.g. Universal Transport Ltd">
                 </div>
                 <div class="form-group">
-                    <label>Event Category / Type</label>
-                    <select id="evt-type">
-                        <option value="truckfest">🎪 Truckfest + Convoy</option>
-                        <option value="convoy">🚛 Standard Convoy</option>
-                        <option value="charity">❤️ Charity Convoy</option>
-                        <option value="utl_own">🌟 UTL Own Convoy Event</option>
-                        <option value="custom_vtc">🎨 Custom VTC Event</option>
+                    <label>VTC Logo Image URL *</label>
+                    <input type="url" id="slot-vtc-logo" required placeholder="https://imghippo.com/logo.png">
+                </div>
+                <div class="form-group">
+                    <label>VTC HaulMP Page Link *</label>
+                    <input type="url" id="slot-vtc-link" required placeholder="HaulMP or TMP Link">
+                </div>
+                <div class="form-group">
+                    <label>Select Preferred Slot *</label>
+                    <select id="slot-vtc-choice" required>
+                        <option value="">-- Choose an Available Slot --</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Date & Time (UK Time)</label>
-                    <input type="datetime-local" id="evt-date" required>
+                    <label>Estimation of Drivers Attending *</label>
+                    <input type="number" id="slot-vtc-drivers" min="1" required placeholder="10">
                 </div>
                 <div class="form-group">
-                    <label>Simulation Server</label>
-                    <input type="text" id="evt-server" required placeholder="Simulation 1">
+                    <label>Discord Username *</label>
+                    <input type="text" id="slot-vtc-discord" required placeholder="Username">
                 </div>
                 <div class="form-group">
-                    <label>Route Details</label>
-                    <input type="text" id="evt-route" required placeholder="Innsbruck ➔ Salzburg">
+                    <label>Position In Your VTC *</label>
+                    <input type="text" id="slot-vtc-position" required placeholder="e.g. Owner / Event Manager">
                 </div>
-                <div class="form-group">
-                    <label>Event Description</label>
-                    <textarea id="evt-desc" rows="4" placeholder="Additional convoy rules, slot details, or instructions..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Route Map Image URL</label>
-                    <input type="url" id="evt-img-url" placeholder="https://i.imgur.com/..." required>
-                </div>
-                
-                <!-- Dynamic Slot Maps & Capacities Builder -->
-                <div class="form-group">
-                    <label>📍 Slot Maps, Names & Slot Capacities</label>
-                    <div id="slot-builder-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;"></div>
-                    <button type="button" class="btn btn-secondary" style="font-size: 11px; padding: 5px 10px;" onclick="addSlotBuilderRow()">➕ Add Slot Area / Map</button>
-                </div>
-
-                <button type="submit" class="btn" id="form-submit-btn" style="width: 100%; margin-top: 10px;">Publish Event</button>
+                <button type="submit" class="btn" style="width: 100%; margin-top: 10px; background: var(--primary-blue); color: var(--bg-dark);">Submit Slot Booking</button>
             </form>
         </div>
     </div>
+</div>
 
-    <!-- Staff Manual Booking Modal -->
-    <div class="modal-overlay" id="staff-manual-booking-modal">
-        <div class="modal-card" style="max-width: 450px;">
-            <div class="modal-header">
-                <h2>➕ Manual VTC Slot Assignment</h2>
-                <button class="close-btn" onclick="closeModal('staff-manual-booking-modal')">×</button>
+<!-- Lightbox Modal -->
+<div class="modal-overlay" id="lightbox-modal" onclick="closeModal('lightbox-modal')">
+    <div class="lightbox-card">
+        <img id="lightbox-img" src="" alt="Enlarged Route Map">
+    </div>
+</div>
+
+<!-- Management Modal (Publish / Edit) -->
+<div class="modal-overlay" id="management-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2 id="management-modal-title">⚙️ Events Team Control Panel</h2>
+            <button class="close-btn" onclick="closeModal('management-modal')">×</button>
+        </div>
+        <form id="event-form" onsubmit="handleEventSubmit(event)">
+            <input type="hidden" id="edit-event-id">
+            <div class="form-group">
+                <label>Event Title</label>
+                <input type="text" id="evt-title" required placeholder="e.g. Alpine Night Run">
             </div>
-            <form id="staff-manual-booking-form" onsubmit="submitStaffManualBooking(event)">
-                <div class="form-group">
-                    <label>VTC Company Name *</label>
-                    <input type="text" id="manual-vtc-name" required placeholder="e.g. Universal Transport Ltd">
-                </div>
-                <div class="form-group">
-                    <label>VTC Logo URL (Optional)</label>
-                    <input type="url" id="manual-vtc-logo" placeholder="https://...">
-                </div>
-                <div class="form-group">
-                    <label>VTC Page / Link *</label>
-                    <input type="url" id="manual-vtc-link" required placeholder="https://haulmp.com/vtc/...">
-                </div>
-                <div class="form-group">
-                    <label>Assign Slot *</label>
-                    <select id="manual-vtc-slot" required></select>
-                </div>
-                <div class="form-group">
-                    <label>Estimated Drivers *</label>
-                    <input type="number" id="manual-vtc-drivers" min="1" value="10" required>
-                </div>
-                <button type="submit" class="btn" style="width: 100%; background: var(--primary-blue); color: var(--bg-dark);">Confirm Manual Booking</button>
-            </form>
-        </div>
+            <div class="form-group">
+                <label>Event Category / Type</label>
+                <select id="evt-type">
+                    <option value="truckfest">🎪 Truckfest + Convoy</option>
+                    <option value="convoy">🚛 Standard Convoy</option>
+                    <option value="charity">❤️ Charity Convoy</option>
+                    <option value="utl_own">🌟 UTL Own Convoy Event</option>
+                    <option value="custom_vtc">🎨 Custom VTC Event</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Date & Time (UK Time)</label>
+                <input type="datetime-local" id="evt-date" required>
+            </div>
+            <div class="form-group">
+                <label>Simulation Server</label>
+                <input type="text" id="evt-server" required placeholder="Simulation 1">
+            </div>
+            <div class="form-group">
+                <label>Route Details</label>
+                <input type="text" id="evt-route" required placeholder="Innsbruck ➔ Salzburg">
+            </div>
+            <div class="form-group">
+                <label>Event Description</label>
+                <textarea id="evt-desc" rows="4" placeholder="Additional convoy rules, slot details, or instructions..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Route Map Image URL</label>
+                <input type="url" id="evt-img-url" placeholder="https://i.imgur.com/..." required>
+            </div>
+            
+            <!-- Dynamic Slot Maps & Capacities Builder -->
+            <div class="form-group">
+                <label>📍 Slot Maps, Names & Slot Capacities</label>
+                <div id="slot-builder-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;"></div>
+                <button type="button" class="btn btn-secondary" style="font-size: 11px; padding: 5px 10px;" onclick="addSlotBuilderRow()">➕ Add Slot Area / Map</button>
+            </div>
+
+            <button type="submit" class="btn" id="form-submit-btn" style="width: 100%; margin-top: 10px;">Publish Event</button>
+        </form>
     </div>
-    
-    <!-- External Script Integration -->
-    <script src="script.js"></script>
-    <script>
-        // Dual-Clock Animation & State Manager
-        const previousStdValues = {};
-        const previousXmasValues = {};
+</div>
 
-        function setStdDigit(cardId, newVal) {
-            const card = document.getElementById(cardId);
-            if (!card) return;
-            const oldVal = previousStdValues[cardId];
+<!-- Staff Manual Booking Modal -->
+<div class="modal-overlay" id="staff-manual-booking-modal">
+    <div class="modal-card" style="max-width: 450px;">
+        <div class="modal-header">
+            <h2>➕ Manual VTC Slot Assignment</h2>
+            <button class="close-btn" onclick="closeModal('staff-manual-booking-modal')">×</button>
+        </div>
+        <form id="staff-manual-booking-form" onsubmit="submitStaffManualBooking(event)">
+            <div class="form-group">
+                <label>VTC Company Name *</label>
+                <input type="text" id="manual-vtc-name" required placeholder="e.g. Universal Transport Ltd">
+            </div>
+            <div class="form-group">
+                <label>VTC Logo URL (Optional)</label>
+                <input type="url" id="manual-vtc-logo" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>VTC Page / Link *</label>
+                <input type="url" id="manual-vtc-link" required placeholder="https://haulmp.com/vtc/...">
+            </div>
+            <div class="form-group">
+                <label>Assign Slot *</label>
+                <select id="manual-vtc-slot" required></select>
+            </div>
+            <div class="form-group">
+                <label>Estimated Drivers *</label>
+                <input type="number" id="manual-vtc-drivers" min="1" value="10" required>
+            </div>
+            <button type="submit" class="btn" style="width: 100%; background: var(--primary-blue); color: var(--bg-dark);">Confirm Manual Booking</button>
+        </form>
+    </div>
+</div>
 
-            if (oldVal === undefined) {
-                card.querySelector('.std-digit-inner').textContent = newVal;
-                previousStdValues[cardId] = newVal;
-                return;
-            }
+<!-- External Script Integration -->
+<script src="script.js"></script>
+<script>
+    // Dual-Clock Animation & State Manager
+    const previousStdValues = {};
+    const previousXmasValues = {};
 
-            if (oldVal !== newVal) {
-                const currentInner = card.querySelector('.std-digit-inner.active');
-                if (currentInner) {
-                    currentInner.classList.remove('active');
-                    currentInner.classList.add('slide-out');
-                }
+    function setStdDigit(cardId, newVal) {
+        const card = document.getElementById(cardId);
+        if (!card) return;
+        const oldVal = previousStdValues[cardId];
 
-                const incomingInner = document.createElement('div');
-                incomingInner.className = 'std-digit-inner slide-in';
-                incomingInner.textContent = newVal;
-                card.appendChild(incomingInner);
-
-                void incomingInner.offsetWidth;
-
-                incomingInner.classList.remove('slide-in');
-                incomingInner.classList.add('active');
-
-                setTimeout(() => {
-                    const oldElements = card.querySelectorAll('.slide-out');
-                    oldElements.forEach(el => el.remove());
-                }, 300);
-
-                previousStdValues[cardId] = newVal;
-            }
+        if (oldVal === undefined) {
+            card.querySelector('.std-digit-inner').textContent = newVal;
+            previousStdValues[cardId] = newVal;
+            return;
         }
 
-        function setXmasDigit(cardId, newVal) {
-            const card = document.getElementById(cardId);
-            if (!card) return;
-            const oldVal = previousXmasValues[cardId];
-
-            if (oldVal === undefined) {
-                const initialInner = card.querySelector('.xmas-digit-inner');
-                if (initialInner) initialInner.textContent = newVal;
-                previousXmasValues[cardId] = newVal;
-                return;
+        if (oldVal !== newVal) {
+            const currentInner = card.querySelector('.std-digit-inner.active');
+            if (currentInner) {
+                currentInner.classList.remove('active');
+                currentInner.classList.add('slide-out');
             }
 
-            if (oldVal !== newVal) {
-                const currentInner = card.querySelector('.xmas-digit-inner.active');
-                if (currentInner) {
-                    currentInner.classList.remove('active');
-                    currentInner.classList.add('slide-out');
-                }
+            const incomingInner = document.createElement('div');
+            incomingInner.className = 'std-digit-inner slide-in';
+            incomingInner.textContent = newVal;
+            card.appendChild(incomingInner);
 
-                const incomingInner = document.createElement('div');
-                incomingInner.className = 'xmas-digit-inner slide-in';
-                incomingInner.textContent = newVal;
-                card.appendChild(incomingInner);
+            void incomingInner.offsetWidth;
 
-                void incomingInner.offsetWidth;
+            incomingInner.classList.remove('slide-in');
+            incomingInner.classList.add('active');
 
-                incomingInner.classList.remove('slide-in');
-                incomingInner.classList.add('active');
+            setTimeout(() => {
+                const oldElements = card.querySelectorAll('.slide-out');
+                oldElements.forEach(el => el.remove());
+            }, 300);
 
-                setTimeout(() => {
-                    const oldElements = card.querySelectorAll('.slide-out');
-                    oldElements.forEach(el => el.remove());
-                }, 300);
+            previousStdValues[cardId] = newVal;
+        }
+    }
 
-                previousXmasValues[cardId] = newVal;
-            }
+    function setXmasDigit(cardId, newVal) {
+        const card = document.getElementById(cardId);
+        if (!card) return;
+        const oldVal = previousXmasValues[cardId];
+
+        if (oldVal === undefined) {
+            const initialInner = card.querySelector('.xmas-digit-inner');
+            if (initialInner) initialInner.textContent = newVal;
+            previousXmasValues[cardId] = newVal;
+            return;
         }
 
-        function updateBottomClocks() {
-            const now = new Date();
-            const isDec = document.body.classList.contains('theme-december');
-
-            const stdClockView = document.getElementById('std-clock-view');
-            const xmasClockView = document.getElementById('xmas-clock-view');
-
-            if (isDec) {
-                if (stdClockView) stdClockView.style.display = 'none';
-                if (xmasClockView) xmasClockView.style.display = 'flex';
-
-                // Christmas Clock Logic
-                const ukTimeString = now.toLocaleTimeString('en-GB', { 
-                    timeZone: 'Europe/London', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' 
-                });
-                setXmasDigit('xmas-h1', ukTimeString.slice(0, 1));
-                setXmasDigit('xmas-h2', ukTimeString.slice(1, 2));
-                setXmasDigit('xmas-m1', ukTimeString.slice(3, 4));
-                setXmasDigit('xmas-m2', ukTimeString.slice(4, 5));
-                setXmasDigit('xmas-s1', ukTimeString.slice(6, 7));
-                setXmasDigit('xmas-s2', ukTimeString.slice(7, 8));
-
-                const dateString = now.toLocaleDateString('en-GB', { 
-                    timeZone: 'Europe/London', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-                });
-                const xmasDateElem = document.getElementById('xmas-date');
-                if (xmasDateElem) xmasDateElem.textContent = dateString;
-
-                const ukNowString = now.toLocaleString('en-US', { timeZone: 'Europe/London' });
-                const ukNow = new Date(ukNowString);
-                let xmasYear = ukNow.getFullYear();
-                let xmasDate = new Date(xmasYear, 11, 25);
-                if (ukNow > xmasDate && ukNow.getDate() !== 25) {
-                    xmasYear++;
-                    xmasDate = new Date(xmasYear, 11, 25);
-                }
-                const diffTime = xmasDate - ukNow;
-                const countdownElem = document.getElementById('xmas-countdown');
-                if (countdownElem) {
-                    if (ukNow.getMonth() === 11 && ukNow.getDate() === 25) {
-                        countdownElem.textContent = "🎅 MERRY CHRISTMAS! 🎄";
-                    } else {
-                        const totalMinutes = Math.floor(diffTime / (1000 * 60));
-                        const days = Math.floor(totalMinutes / (60 * 24));
-                        const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-                        const minutes = totalMinutes % 60;
-                        countdownElem.textContent = `🎅 ${days}D ${hours}H ${minutes}M TILL CHRISTMAS 🎄`;
-                    }
-                }
-
-            } else {
-                if (xmasClockView) xmasClockView.style.display = 'none';
-                if (stdClockView) stdClockView.style.display = 'flex';
-
-                // Standard Clock Logic
-                const ukTimeString = now.toLocaleTimeString('en-GB', { 
-                    timeZone: 'Europe/London', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' 
-                });
-                setStdDigit('h1', ukTimeString.slice(0, 1));
-                setStdDigit('h2', ukTimeString.slice(1, 2));
-                setStdDigit('m1', ukTimeString.slice(3, 4));
-                setStdDigit('m2', ukTimeString.slice(4, 5));
-                setStdDigit('s1', ukTimeString.slice(6, 7));
-                setStdDigit('s2', ukTimeString.slice(7, 8));
-
-                const dateString = now.toLocaleDateString('en-GB', { 
-                    timeZone: 'Europe/London', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-                });
-                const stdDateElem = document.getElementById('std-date');
-                if (stdDateElem) stdDateElem.textContent = dateString;
-
-                const utcDateString = now.toLocaleDateString('en-GB', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: '2-digit' });
-                const utcTimeString = now.toLocaleTimeString('en-GB', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                const stdUtcElem = document.getElementById('std-utc-display');
-                if (stdUtcElem) stdUtcElem.textContent = `${utcDateString} - ${utcTimeString} UTC`;
+        if (oldVal !== newVal) {
+            const currentInner = card.querySelector('.xmas-digit-inner.active');
+            if (currentInner) {
+                currentInner.classList.remove('active');
+                currentInner.classList.add('slide-out');
             }
-        }
 
-        setInterval(updateBottomClocks, 1000);
-        updateBottomClocks();
-    </script>
-</body>
-</html>
+            const incomingInner = document.createElement('div');
+            incomingInner.className = 'xmas-digit-inner slide-in';
+            incomingInner.textContent = newVal;
+            card.appendChild(incomingInner);
+
+            void incomingInner.offsetWidth;
+
+            incomingInner.classList.remove('slide-in');
+            incomingInner.classList.add('active');
+
+            setTimeout(() => {
+                const oldElements = card.querySelectorAll('.slide-out');
+                oldElements.forEach(el => el.remove());
+            }, 300);
+
+            previousXmasValues[cardId] = newVal;
+        }
+    }
+
+    function updateBottomClocks() {
+        const now = new Date();
+        const isDec = document.body.classList.contains('theme-december');
+
+        const stdClockView = document.getElementById('std-clock-view');
+        const xmasClockView = document.getElementById('xmas-clock-view');
+
+        if (isDec) {
+            if (stdClockView) stdClockView.style.display = 'none';
+            if (xmasClockView) xmasClockView.style.display = 'flex';
+
+            // Christmas Clock Logic
+            const ukTimeString = now.toLocaleTimeString('en-GB', { 
+                timeZone: 'Europe/London', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' 
+            });
+            setXmasDigit('xmas-h1', ukTimeString.slice(0, 1));
+            setXmasDigit('xmas-h2', ukTimeString.slice(1, 2));
+            setXmasDigit('xmas-m1', ukTimeString.slice(3, 4));
+            setXmasDigit('xmas-m2', ukTimeString.slice(4, 5));
+            setXmasDigit('xmas-s1', ukTimeString.slice(6, 7));
+            setXmasDigit('xmas-s2', ukTimeString.slice(7, 8));
+
+            const dateString = now.toLocaleDateString('en-GB', { 
+                timeZone: 'Europe/London', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+            const xmasDateElem = document.getElementById('xmas-date');
+            if (xmasDateElem) xmasDateElem.textContent = dateString;
+
+            const ukNowString = now.toLocaleString('en-US', { timeZone: 'Europe/London' });
+            const ukNow = new Date(ukNowString);
+            let xmasYear = ukNow.getFullYear();
+            let xmasDate = new Date(xmasYear, 11, 25);
+            if (ukNow > xmasDate && ukNow.getDate() !== 25) {
+                xmasYear++;
+                xmasDate = new Date(xmasYear, 11, 25);
+            }
+            const diffTime = xmasDate - ukNow;
+            const countdownElem = document.getElementById('xmas-countdown');
+            if (countdownElem) {
+                if (ukNow.getMonth() === 11 && ukNow.getDate() === 25) {
+                    countdownElem.textContent = "🎅 MERRY CHRISTMAS! 🎄";
+                } else {
+                    const totalMinutes = Math.floor(diffTime / (1000 * 60));
+                    const days = Math.floor(totalMinutes / (60 * 24));
+                    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+                    const minutes = totalMinutes % 60;
+                    countdownElem.textContent = `🎅 ${days}D ${hours}H ${minutes}M TILL CHRISTMAS 🎄`;
+                }
+            }
+
+        } else {
+            if (xmasClockView) xmasClockView.style.display = 'none';
+            if (stdClockView) stdClockView.style.display = 'flex';
+
+            // Standard Clock Logic
+            const ukTimeString = now.toLocaleTimeString('en-GB', { 
+                timeZone: 'Europe/London', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' 
+            });
+            setStdDigit('h1', ukTimeString.slice(0, 1));
+            setStdDigit('h2', ukTimeString.slice(1, 2));
+            setStdDigit('m1', ukTimeString.slice(3, 4));
+            setStdDigit('m2', ukTimeString.slice(4, 5));
+            setStdDigit('s1', ukTimeString.slice(6, 7));
+            setStdDigit('s2', ukTimeString.slice(7, 8));
+
+            const dateString = now.toLocaleDateString('en-GB', { 
+                timeZone: 'Europe/London', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+            const stdDateElem = document.getElementById('std-date');
+            if (stdDateElem) stdDateElem.textContent = dateString;
+
+            const utcDateString = now.toLocaleDateString('en-GB', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: '2-digit' });
+            const utcTimeString = now.toLocaleTimeString('en-GB', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const stdUtcElem = document.getElementById('std-utc-display');
+            if (stdUtcElem) stdUtcElem.textContent = `${utcDateString} - ${utcTimeString} UTC`;
+        }
+    }
+
+    setInterval(updateBottomClocks, 1000);
+    updateBottomClocks();
+</script>
