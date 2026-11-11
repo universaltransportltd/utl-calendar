@@ -799,20 +799,26 @@
             transform: scale(1.02);
         }
 
+        /* ==========================================
+           SCALABLE & MOBILE-RESPONSIVE MODALS
+           ========================================== */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             background: rgba(15, 10, 30, 0.85);
+            backdrop-filter: blur(4px);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.2s;
+            transition: opacity 0.25s ease-in-out;
+            padding: 16px;
+            box-sizing: border-box;
         }
 
         .modal-overlay.active {
@@ -826,25 +832,28 @@
             border-radius: 12px;
             width: 100%;
             max-width: 650px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            max-height: 90vh;
-            overflow-y: auto;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            word-break: break-word;
+            max-height: calc(100vh - 32px);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            box-sizing: border-box;
+            overflow: hidden;
         }
 
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+            flex-shrink: 0;
         }
 
         .modal-header h2 {
             color: var(--primary-blue);
-            font-size: 20px;
+            font-size: 1.25rem;
+            line-height: 1.3;
+            word-break: break-word;
         }
 
         .close-btn {
@@ -853,6 +862,37 @@
             color: var(--text-dim);
             font-size: 20px;
             cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* Scrollable body sections inside modals */
+        #modal-body,
+        #slot-modal-body,
+        #event-form,
+        #staff-manual-booking-form {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 4px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        /* Modal custom scrollbars */
+        #modal-body::-webkit-scrollbar,
+        #slot-modal-body::-webkit-scrollbar,
+        #event-form::-webkit-scrollbar,
+        .modal-card::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #modal-body::-webkit-scrollbar-thumb,
+        #slot-modal-body::-webkit-scrollbar-thumb,
+        #event-form::-webkit-scrollbar-thumb,
+        .modal-card::-webkit-scrollbar-thumb {
+            background: var(--primary-blue);
+            border-radius: 3px;
         }
 
         .form-group {
@@ -868,12 +908,14 @@
 
         .form-group input, .form-group select, .form-group textarea {
             width: 100%;
+            max-width: 100%;
             padding: 10px;
             background-color: var(--bg-dark);
             border: 1px solid var(--border-color);
             border-radius: 6px;
             color: var(--text-light);
             font-size: 14px;
+            box-sizing: border-box;
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
@@ -934,12 +976,6 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 6px;
-        }
-
-        @media (max-width: 600px) {
-            .booked-vtcs-grid {
-                grid-template-columns: 1fr;
-            }
         }
 
         .booked-vtc-item {
@@ -1057,6 +1093,36 @@
             word-wrap: break-word;
             overflow-wrap: break-word;
             word-break: break-word;
+        }
+
+        /* Mobile Adaptations */
+        @media (max-width: 600px) {
+            .modal-overlay {
+                padding: 10px;
+            }
+
+            .modal-card {
+                padding: 16px;
+                max-height: calc(100vh - 20px);
+                border-radius: 10px;
+            }
+
+            .modal-header h2 {
+                font-size: 1.1rem;
+            }
+
+            .booked-vtcs-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .rsvp-container {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .rsvp-btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -1207,51 +1273,51 @@
                 <h2 id="modal-title">Event Title</h2>
                 <button class="close-btn" onclick="closeModal('event-modal')">×</button>
             </div>
-            <div id="modal-body"></div>
-
-            <!-- Public Booked VTC List Section -->
-            <div id="utl-booked-vtcs-container" class="booked-vtc-list-card" style="display: none;">
-                <h4>🚛 Registered & Booked VTC Slots <span id="booked-vtc-count-tag" style="font-size: 11px; color: var(--primary-blue); font-weight: 700;">(0 VTCs | 0 Drivers)</span></h4>
-                <div id="booked-vtcs-list-body" class="booked-vtcs-grid"></div>
-            </div>
-            
-            <div style="margin-top: 25px;" id="slot-booking-action-wrapper">
-                <div id="utl-slot-booking-btn-container" style="margin-bottom: 15px; display: none;">
-                    <button class="btn btn-discord" style="width: 100%; background: var(--primary-blue); color: var(--bg-dark); font-weight: bold;" onclick="openSlotBookingModal()">🎟️ Book Convoy Slots (VTC Representative)</button>
+            <div id="modal-body">
+                <!-- Public Booked VTC List Section -->
+                <div id="utl-booked-vtcs-container" class="booked-vtc-list-card" style="display: none;">
+                    <h4>🚛 Registered & Booked VTC Slots <span id="booked-vtc-count-tag" style="font-size: 11px; color: var(--primary-blue); font-weight: 700;">(0 VTCs | 0 Drivers)</span></h4>
+                    <div id="booked-vtcs-list-body" class="booked-vtcs-grid"></div>
                 </div>
-            </div>
-
-            <div style="margin-top: 15px;">
-                <!-- Restored Individual RSVP Summary Counts Bar -->
-                <div id="rsvp-summary-counts" style="display: flex; justify-content: space-around; background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; margin-bottom: 10px; font-size: 12px; font-weight: 600;">
-                    <span id="count-attending" style="color: var(--success);">✅ Attending: 0</span>
-                    <span id="count-unsure" style="color: var(--warning);">❓ Unsure: 0</span>
-                    <span id="count-declined" style="color: var(--danger);">❌ Unable: 0</span>
-                </div>
-
-                <p style="text-align: center; font-size: 13px; color: var(--text-dim); margin-bottom: 10px;" id="rsvp-status-label">Your RSVP Status</p>
-                <div class="rsvp-container">
-                    <button class="rsvp-btn attending" id="rsvp-yes" onclick="setRSVP('attending')">✅ Attending</button>
-                    <button class="rsvp-btn unsure" id="rsvp-maybe" onclick="setRSVP('unsure')">❓ Unsure</button>
-                    <button class="rsvp-btn declined" id="rsvp-no" onclick="setRSVP('declined')">❌ Unable</button>
-                </div>
-
-                <!-- Staff Detailed Name Breakdown & Editor -->
-                <div id="staff-rsvp-breakdown-box" class="staff-rsvp-breakdown" style="display: none;">
-                    <h4>👥 Staff Roster View & Booking Management</h4>
-                    <div class="staff-rsvp-category" id="breakdown-vtcs">🚛 <strong>Booked VTCs:</strong> None</div>
-                    <div class="staff-rsvp-category" id="breakdown-attending">✅ <strong>Attending:</strong> None</div>
-                    <div class="staff-rsvp-category" id="breakdown-unsure">❓ <strong>Unsure:</strong> None</div>
-                    <div class="staff-rsvp-category" id="breakdown-declined">❌ <strong>Unable:</strong> None</div>
+                
+                <div style="margin-top: 25px;" id="slot-booking-action-wrapper">
+                    <div id="utl-slot-booking-btn-container" style="margin-bottom: 15px; display: none;">
+                        <button class="btn btn-discord" style="width: 100%; background: var(--primary-blue); color: var(--bg-dark); font-weight: bold;" onclick="openSlotBookingModal()">🎟️ Book Convoy Slots (VTC Representative)</button>
+                    </div>
                 </div>
 
                 <div style="margin-top: 15px;">
-                    <button class="btn btn-secondary" style="width: 100%; border-color: var(--primary-blue);" onclick="triggerDiscordReminder()">🔔 Set Discord Event Reminder</button>
-                </div>
+                    <!-- Restored Individual RSVP Summary Counts Bar -->
+                    <div id="rsvp-summary-counts" style="display: flex; justify-content: space-around; background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; margin-bottom: 10px; font-size: 12px; font-weight: 600;">
+                        <span id="count-attending" style="color: var(--success);">✅ Attending: 0</span>
+                        <span id="count-unsure" style="color: var(--warning);">❓ Unsure: 0</span>
+                        <span id="count-declined" style="color: var(--danger);">❌ Unable: 0</span>
+                    </div>
 
-                <div id="staff-actions-container" style="margin-top: 15px; display: none; gap: 10px;">
-                    <button class="btn btn-secondary" style="flex: 1; border-color: var(--primary-blue);" onclick="openEditEventModal()">✏️ Edit Event</button>
-                    <button class="btn btn-danger" style="flex: 1;" onclick="deleteCurrentEvent()">🗑️ Delete Event</button>
+                    <p style="text-align: center; font-size: 13px; color: var(--text-dim); margin-bottom: 10px;" id="rsvp-status-label">Your RSVP Status</p>
+                    <div class="rsvp-container">
+                        <button class="rsvp-btn attending" id="rsvp-yes" onclick="setRSVP('attending')">✅ Attending</button>
+                        <button class="rsvp-btn unsure" id="rsvp-maybe" onclick="setRSVP('unsure')">❓ Unsure</button>
+                        <button class="rsvp-btn declined" id="rsvp-no" onclick="setRSVP('declined')">❌ Unable</button>
+                    </div>
+
+                    <!-- Staff Detailed Name Breakdown & Editor -->
+                    <div id="staff-rsvp-breakdown-box" class="staff-rsvp-breakdown" style="display: none;">
+                        <h4>👥 Staff Roster View & Booking Management</h4>
+                        <div class="staff-rsvp-category" id="breakdown-vtcs">🚛 <strong>Booked VTCs:</strong> None</div>
+                        <div class="staff-rsvp-category" id="breakdown-attending">✅ <strong>Attending:</strong> None</div>
+                        <div class="staff-rsvp-category" id="breakdown-unsure">❓ <strong>Unsure:</strong> None</div>
+                        <div class="staff-rsvp-category" id="breakdown-declined">❌ <strong>Unable:</strong> None</div>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <button class="btn btn-secondary" style="width: 100%; border-color: var(--primary-blue);" onclick="triggerDiscordReminder()">🔔 Set Discord Event Reminder</button>
+                    </div>
+
+                    <div id="staff-actions-container" style="margin-top: 15px; display: none; gap: 10px;">
+                        <button class="btn btn-secondary" style="flex: 1; border-color: var(--primary-blue);" onclick="openEditEventModal()">✏️ Edit Event</button>
+                        <button class="btn btn-danger" style="flex: 1;" onclick="deleteCurrentEvent()">🗑️ Delete Event</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1265,7 +1331,6 @@
                 <button class="close-btn" onclick="closeModal('slot-booking-modal')">×</button>
             </div>
             <div id="slot-modal-body">
-                
                 <!-- TOP BANNER: Available Slots Breakdown -->
                 <div class="available-slots-banner">
                     <h4>🟢 Available Unreserved Slots</h4>
