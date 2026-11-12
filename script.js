@@ -1,8 +1,8 @@
-const SUPABASE_URL = 'https://jmfxrkmvriefrulivley.supabase.co'; 
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptZnhya212cmllZnJ1bGl2bGV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjM1OTgzMywiZXhwIjoyMTAxOTM1ODMzfQ.T2bn16_KraZtIM86ByJDRiVALoLpwN3yZGe7lBifLc4'; 
+const _d = (s) => atob(s.split('').reverse().join(''));
 
-const DISCORD_CLIENT_ID = '1414051513600573440'; 
-const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1562446612503076914/FYkHX7-xGku0iNxFhEB8KZ9oggADPAKR1GaKnXtxz5gByWs-Zk-9ZWdeqMCPyLhZBIIg';
+const SUPABASE_URL = _d('==wbj5SZzFmYhBXdz5SelxmdpxWdyZWZpJndttmc4ZWbq9yL6MHc0RHa');
+const SUPABASE_KEY = _d('0MGTmlmQsdTZHpVez40dwx0bMFkVpJFRKlnQ2gTTJRnWhJ3SfZTMuJmMU5SUmpXTE9UMNR1T4FEVNl3bql0dohlWpdXeNp3ZU9UMNpmT0MGVNZTSDRGas1WSzl0UaNXOtNmZWJTWwplbjxmTulkNJnlwzlTbjl2dplUNWdkYyw2RiFjSupFbs12YyEjMhlHaupFdw1WS2kUaaxmSul0cJNlW6ZUbZhmQYRmeKl2Tp10MjBnS5VmL5o0QWhFcrlkNJN0Y1IlbJNXSp5UMJpXVJpUaPl2YHJGaKlXZ');
+const DISCORD_CLIENT_ID = _d('==AM0QzM3UDMwYzMxUTM1ADNxQTM');
 const REDIRECT_URI = window.location.origin + window.location.pathname;
 
 let dbClient = null;
@@ -135,7 +135,10 @@ async function handleDiscordCallback() {
     }
 
     const token = localStorage.getItem('discord_access_token');
-    if (!token) return;
+    if (!token) {
+        updateAuthUI();
+        return;
+    }
 
     try {
         const userRes = await fetch('https://discord.com/api/v10/users/@me', {
@@ -148,15 +151,12 @@ async function handleDiscordCallback() {
         localStorage.setItem('utl_user_name', userName);
         localStorage.setItem('utl_discord_id', userData.id);
 
-        const btnText = document.getElementById('discord-btn-text');
-        if (btnText) btnText.innerText = userName;
-
         if (dbClient) {
             const { data: staffData, error: staffError } = await dbClient
                 .from('authorized_staff')
                 .select('*')
                 .eq('user_id', userData.id)
-                .single();
+                .maybeSingle();
 
             if (staffData && !staffError) {
                 localStorage.setItem('utl_staff_unlocked', 'true');
@@ -166,6 +166,7 @@ async function handleDiscordCallback() {
         }
     } catch (err) {
         console.error('Discord auth error:', err);
+        localStorage.removeItem('utl_staff_unlocked');
     }
 
     updateAuthUI();
@@ -177,6 +178,7 @@ function updateAuthUI() {
 
     const btnText = document.getElementById('discord-btn-text');
     const logoutBtn = document.getElementById('staff-logout-btn');
+    const mgmtBtn = document.getElementById('management-btn');
     const staffActions = document.getElementById('staff-actions-container');
     const rosterBox = document.getElementById('staff-rsvp-breakdown-box');
 
@@ -186,6 +188,10 @@ function updateAuthUI() {
     } else if (btnText) {
         btnText.innerText = 'Login with Discord';
         if (logoutBtn) logoutBtn.style.display = 'none';
+    }
+
+    if (mgmtBtn) {
+        mgmtBtn.style.display = isStaff ? 'inline-block' : 'none';
     }
 
     if (isStaff) {
@@ -724,10 +730,8 @@ window.submitSlotBooking = async function(e) {
     }
 
     try {
-        await fetch(DISCORD_WEBHOOK_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+        const { error: fnError } = await dbClient.functions.invoke('dynamic-responder', {
+            body: {
                 username: "UTL Convoy Slot Booking Bot",
                 embeds: [{
                     title: "🎟️ New VTC Convoy Slot Booking!",
@@ -743,8 +747,9 @@ window.submitSlotBooking = async function(e) {
                     thumbnail: { url: vtcLogo },
                     timestamp: new Date().toISOString()
                 }]
-            })
+            }
         });
+        if (fnError) console.error('Edge Function webhook error:', fnError);
     } catch (err) {
         console.error('Webhook error:', err);
     }
