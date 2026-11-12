@@ -920,6 +920,10 @@ window.removeRsvpUser = async function(driverName) {
     renderCalendar();
 };
 
+function escapeHtml(str) {
+    return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
 function openEventModal(eventId) {
     activeEventId = eventId;
     sessionStorage.setItem('utl_active_event_id', eventId);
@@ -964,15 +968,15 @@ function openEventModal(eventId) {
                     const originalIndex = evt.bookedVtcs.indexOf(item);
                     return `
                     <div class="booked-vtc-item">
-                        <div class="booked-vtc-info">
-                            <img src="${item.vtcLogo}" class="booked-vtc-logo" onerror="this.src='https://i.imgur.com/86k1z0Z.png'">
-                            <div>
-                                <a href="${item.vtcLink || '#'}" target="_blank" style="color:var(--text-light); font-weight:bold; text-decoration:none;">${item.vtcName}</a>
-                                <span style="color:var(--text-dim); font-size:10px;"> (${item.drivers || '?'} Drivers)</span>
+                        <div class="booked-vtc-header" style="display:flex; align-items:center; justify-content:space-between; width:100%; margin-bottom:2px;">
+                            <div style="display:flex; align-items:center; gap:5px; overflow:hidden; min-width:0;">
+                                <img src="${escapeHtml(item.vtcLogo)}" class="booked-vtc-logo" style="width:16px; height:16px; border-radius:3px; object-fit:contain; flex-shrink:0;" onerror="this.src='https://i.imgur.com/86k1z0Z.png'">
+                                <a href="${escapeHtml(item.vtcLink || '#')}" target="_blank" class="booked-vtc-name" style="color:var(--text-light); font-weight:bold; text-decoration:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(item.vtcName)}</a>
                             </div>
+                            ${isStaff ? `<button class="btn btn-danger" style="padding:1px 4px; font-size:9px; margin-left:4px; flex-shrink:0;" onclick="removeBookedVtc(${originalIndex})">×</button>` : ''}
                         </div>
-                        <div style="font-weight:bold; color:var(--primary-blue); font-size:10px; white-space:nowrap;">
-                            📍 ${item.slotChoice} ${isStaff ? `<button class="btn btn-danger" style="padding:1px 4px; font-size:9px; margin-left:4px;" onclick="removeBookedVtc(${originalIndex})">×</button>` : ''}
+                        <div class="booked-vtc-details" style="font-size:10px; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">
+                            👥 ${escapeHtml(item.drivers || '?')} Drivers - <span style="color:var(--primary-blue); font-weight:bold;">📍 ${escapeHtml(item.slotChoice)}</span>
                         </div>
                     </div>
                 `;
@@ -995,7 +999,7 @@ function openEventModal(eventId) {
     
     let imgHTML = evt.routeImage 
         ? `<div style="margin-bottom:15px; text-align:center;">
-             <img src="${evt.routeImage}" style="max-width:100%; max-height:220px; border-radius:8px; cursor:pointer;" onclick="openLightbox('${evt.routeImage}')">
+             <img src="${escapeHtml(evt.routeImage)}" style="max-width:100%; max-height:220px; border-radius:8px; cursor:pointer;" onclick="openLightbox('${escapeHtml(evt.routeImage)}')">
            </div>` 
         : '';
 
@@ -1008,8 +1012,8 @@ function openEventModal(eventId) {
         modalBody.innerHTML = `
             ${imgHTML}
             <p style="margin-bottom: 8px;"><strong>📅 Date & Time:</strong> ${new Date(evt.date).toLocaleString('en-GB')}</p>
-            <p style="margin-bottom: 8px;"><strong>🖥️ Server:</strong> ${evt.server}</p>
-            <p style="margin-bottom: 8px;"><strong>🗺️ Route:</strong> ${evt.route}</p>
+            <p style="margin-bottom: 8px;"><strong>🖥️ Server:</strong> ${escapeHtml(evt.server)}</p>
+            <p style="margin-bottom: 8px;"><strong>🗺️ Route:</strong> ${escapeHtml(evt.route)}</p>
             ${descHTML}
         `;
     }
@@ -1041,13 +1045,13 @@ function openEventModal(eventId) {
     const formatRosterList = (list) => {
         if (list.length === 0) return 'None';
         if (!isStaff) return list.join(', ');
-        return list.map(name => `<span class="rsvp-user-pill">${name} <button onclick="removeRsvpUser('${name.replace(/'/g, "\\'")}')">×</button></span>`).join(' ');
+        return list.map(name => `<span class="rsvp-user-pill">${escapeHtml(name)} <button onclick="removeRsvpUser('${escapeHtml(name).replace(/'/g, "\\'")}')">×</button></span>`).join(' ');
     };
 
     const formatVtcRosterList = (list) => {
         if (list.length === 0) return 'None';
         if (!isStaff) return list.map(v => `${v.vtcName} (${v.slotChoice})`).join(', ');
-        return list.map((v, idx) => `<span class="rsvp-user-pill">${v.vtcName} (${v.slotChoice}) <button onclick="removeBookedVtc(${idx})">×</button></span>`).join(' ');
+        return list.map((v, idx) => `<span class="rsvp-user-pill">${escapeHtml(v.vtcName)} (${escapeHtml(v.slotChoice)}) <button onclick="removeBookedVtc(${idx})">×</button></span>`).join(' ');
     };
 
     const breakdownVtcs = document.getElementById('breakdown-vtcs');
