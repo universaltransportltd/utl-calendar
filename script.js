@@ -1,7 +1,7 @@
 const _d = (s) => atob(s.split('').reverse().join(''));
 
 const SUPABASE_URL = _d('==wbj5SZzFmYhBXdz5SelxmdpxWdyZWZpJndttmc4ZWbq9yL6MHc0RHa');
-const SUPABASE_KEY = _d('0MGTmlmQsdTZHpVez40dwx0bMFkVpJFRKlnQ2gTTJRnWhJ3SfZTMuJmMU5SUmpXTE9UMNR1T4FEVNl3bql0dohlWpdXeNp3ZU9UMNpmT0MGVNZTSDRGas1WSzl0UaNXOtNmZWJTWwplbjxmTulkNJnlwzlTbjl2dplUNWdkYyw2RiFjSupFbs12YyEjMhlHaupFdw1WS2kUaaxmSul0cJNlW6ZUbZhmQYRmeKl2Tp10MjBnS5VmL5o0QWhFcrlkNJN0Y1IlbJNXSp5UMJpXVJpUaPl2YHJGaKlXZ');
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptZnhya212cmllZnJ1bGl2bGV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjM1OTgzMywiZXhwIjoyMTAxOTM1ODMzfQ.T2bn16_KraZtIM86ByJDRiVALoLpwN3yZGe7lBifLc4';
 const DISCORD_CLIENT_ID = _d('==AM0QzM3UDMwYzMxUTM1ADNxQTM');
 const REDIRECT_URI = window.location.origin + window.location.pathname;
 
